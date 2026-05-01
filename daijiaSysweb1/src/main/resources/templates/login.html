@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代驾管理系统 - 登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h1 {
+            color: #667eea;
+            font-weight: 700;
+        }
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+        }
+        .login-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <h1>代驾管理系统</h1>
+            <p class="text-muted">Daijia Management System</p>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <span th:text="${error}"></span>
+        </div>
+        
+        <form action="/login" method="post" id="loginForm">
+            <div class="mb-3">
+                <label for="username" class="form-label">用户名</label>
+                <input type="text" class="form-control" id="username" name="username" 
+                       placeholder="请输入用户名" 
+                       required
+                       minlength="3" 
+                       maxlength="20"
+                       pattern="[a-zA-Z0-9_]+"
+                       title="用户名只能包含字母、数字和下划线，长度3-20位">
+                <div class="invalid-feedback">用户名必须为3-20位，只能包含字母、数字和下划线</div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">密码</label>
+                <input type="password" class="form-control" id="password" name="password" 
+                       placeholder="请输入密码" 
+                       required
+                       minlength="6" 
+                       maxlength="20">
+                <div class="invalid-feedback">密码长度必须为6-20位</div>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary login-btn">登 录</button>
+            </div>
+        </form>
+        
+        <div class="mt-4 text-center text-muted">
+            <small>测试账号：admin / 123456</small>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
