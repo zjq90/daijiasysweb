@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout::head('对账单详情 - 代驾后台管理系统')"></head>
+<body>
+<div th:replace="fragments/layout::navbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="fragments/layout::sidebar"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div th:replace="fragments/layout::messages"></div>
+
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="bi bi-receipt text-success"></i> 对账单详情</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a th:href="@{/recon/edit/{id}(id=${reconciliation.id})}" class="btn btn-outline-primary" th:if="${reconciliation.status == 'PENDING'}">
+                        <i class="bi bi-pencil"></i> 编辑
+                    </a>
+                    <a th:href="@{/recon/confirm/{id}(id=${reconciliation.id})}" 
+                       class="btn btn-success ms-2" 
+                       th:if="${reconciliation.status == 'PENDING'}"
+                       onclick="return confirm('确定要确认该对账单吗？')">
+                        <i class="bi bi-check-circle"></i> 确认
+                    </a>
+                    <a th:href="@{/recon/dispute/{id}(id=${reconciliation.id})}" 
+                       class="btn btn-warning ms-2" 
+                       th:if="${reconciliation.status == 'PENDING'}"
+                       onclick="return confirm('确定要标记该对账单为异议状态吗？')">
+                        <i class="bi bi-exclamation-triangle"></i> 异议
+                    </a>
+                    <a href="/recon/list" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle text-primary"></i> 基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="text-muted">对账单号</label>
+                            <p class="fw-bold" th:text="${reconciliation.reconNo}">RC20260401</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted">对账周期</label>
+                            <p th:text="${#temporals.format(reconciliation.periodStart, 'yyyy-MM-dd')} + ' ~ ' + ${#temporals.format(reconciliation.periodEnd, 'yyyy-MM-dd')}">2026-04-01 ~ 2026-04-15</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted">状态</label>
+                            <p>
+                                <span th:class="'badge rounded-pill ' + 
+                                      (reconciliation.status == 'PENDING' ? 'bg-warning' : 
+                                       reconciliation.status == 'CONFIRMED' ? 'bg-success' : 
+                                       reconciliation.status == 'DISPUTED' ? 'bg-danger' : 'bg-secondary')"
+                                      th:text="${reconciliation.status == 'PENDING' ? '待确认' : 
+                                               reconciliation.status == 'CONFIRMED' ? '已确认' : 
+                                               reconciliation.status == 'DISPUTED' ? '有异议' : '已关闭'}">待确认</span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted">司机ID</label>
+                            <p th:text="${reconciliation.driverId}">1</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted">司机姓名</label>
+                            <p th:text="${reconciliation.driverName}">张三</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-muted">生成时间</label>
+                            <p th:text="${#temporals.format(reconciliation.createTime, 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 12:00:00</p>
+                        </div>
+                        <div class="col-md-4" th:if="${reconciliation.confirmTime != null}">
+                            <label class="text-muted">确认时间</label>
+                            <p th:text="${#temporals.format(reconciliation.confirmTime, 'yyyy-MM-dd HH:mm:ss')}">2026-01-02 12:00:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-calculator text-warning"></i> 对账明细</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="p-4 bg-light rounded">
+                                <h6 class="text-muted">订单数量</h6>
+                                <h3 class="text-primary fw-bold" th:text="${reconciliation.orderCount}">15</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 bg-light rounded">
+                                <h6 class="text-muted">订单总额</h6>
+                                <h3 class="text-primary fw-bold">
+                                    <span class="text-muted">¥</span>
+                                    <span th:text="${#numbers.formatDecimal(reconciliation.totalAmount, 1, 2)}">2250.00</span>
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 bg-light rounded">
+                                <h6 class="text-muted">平台抽成</h6>
+                                <h3 class="text-danger fw-bold">
+                                    <span class="text-muted">¥</span>
+                                    <span th:text="${#numbers.formatDecimal(reconciliation.totalAmount - reconciliation.totalCommission, 1, 2)}">337.50</span>
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-4 bg-light rounded">
+                                <h6 class="text-muted">司机分成</h6>
+                                <h3 class="text-success fw-bold">
+                                    <span class="text-muted">¥</span>
+                                    <span th:text="${#numbers.formatDecimal(reconciliation.totalCommission, 1, 2)}">1912.50</span>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${reconciliation.remark != null}">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-card-text text-info"></i> 备注</h5>
+                </div>
+                <div class="card-body">
+                    <p th:text="${reconciliation.remark}">备注内容...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="fragments/layout::scripts"></div>
+</body>
+</html>

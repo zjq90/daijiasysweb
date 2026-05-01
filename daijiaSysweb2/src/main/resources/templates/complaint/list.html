@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout::head('投诉单管理 - 代驾后台管理系统')"></head>
+<body>
+<div th:replace="fragments/layout::navbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="fragments/layout::sidebar"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div th:replace="fragments/layout::messages"></div>
+
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="bi bi-exclamation-circle text-warning"></i> 投诉单管理</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/complaint/add" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> 新增投诉
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>投诉单号</th>
+                                    <th>关联订单</th>
+                                    <th>被投诉司机</th>
+                                    <th>投诉人</th>
+                                    <th>投诉类型</th>
+                                    <th>状态</th>
+                                    <th>信用扣分</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="complaint : ${complaints}">
+                                    <td th:text="${complaint.id}">1</td>
+                                    <td th:text="${complaint.complaintNo}">CP20260101001</td>
+                                    <td th:text="${complaint.orderNo} ?: '-'">-</td>
+                                    <td th:text="${complaint.driverName}">张三</td>
+                                    <td th:text="${complaint.complainantName}">乘客A</td>
+                                    <td th:text="${complaint.type}">服务态度</td>
+                                    <td>
+                                        <span th:class="'badge rounded-pill ' + 
+                                              (complaint.status == 'PENDING' ? 'bg-warning' : 
+                                               complaint.status == 'PROCESSING' ? 'bg-primary' : 
+                                               complaint.status == 'RESOLVED' ? 'bg-success' : 'bg-secondary')"
+                                              th:text="${complaint.status == 'PENDING' ? '待处理' : 
+                                                       complaint.status == 'PROCESSING' ? '处理中' : 
+                                                       complaint.status == 'RESOLVED' ? '已解决' : '已驳回'}">待处理</span>
+                                    </td>
+                                    <td th:text="${complaint.creditDeduct}">0</td>
+                                    <td th:text="${#temporals.format(complaint.createTime, 'yyyy-MM-dd HH:mm')}">2026-01-01 00:00</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/complaint/detail/{id}(id=${complaint.id})}" class="btn btn-outline-primary" title="详情">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a th:href="@{/complaint/handle/{id}(id=${complaint.id})}" 
+                                               class="btn btn-outline-warning" 
+                                               th:if="${complaint.status == 'PENDING' || complaint.status == 'PROCESSING'}"
+                                               title="处理">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <a th:href="@{/complaint/edit/{id}(id=${complaint.id})}" class="btn btn-outline-secondary" title="编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a th:href="@{/complaint/delete/{id}(id=${complaint.id})}" 
+                                               class="btn btn-outline-danger" 
+                                               title="删除"
+                                               onclick="return confirm('确定要删除该投诉单吗？')">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(complaints)}">
+                                    <td colspan="10" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <p class="mt-2">暂无投诉数据</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="fragments/layout::scripts"></div>
+</body>
+</html>

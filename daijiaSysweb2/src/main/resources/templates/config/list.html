@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout::head('订单分成配置 - 代驾后台管理系统')"></head>
+<body>
+<div th:replace="fragments/layout::navbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="fragments/layout::sidebar"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div th:replace="fragments/layout::messages"></div>
+
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="bi bi-gear text-secondary"></i> 订单分成配置</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/config/add" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> 新增配置
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>配置名称</th>
+                                    <th>平台抽成</th>
+                                    <th>司机分成</th>
+                                    <th>金额范围</th>
+                                    <th>自动清账</th>
+                                    <th>清账延迟</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="config : ${configs}">
+                                    <td th:text="${config.id}">1</td>
+                                    <td th:text="${config.configName}">标准分成配置</td>
+                                    <td>
+                                        <span class="text-danger fw-bold" th:text="${config.platformRate} + '%'">15%</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-success fw-bold" th:text="${config.driverRate} + '%'">85%</span>
+                                    </td>
+                                    <td th:text="'¥' + ${config.minAmount} + ' - ¥' + ${config.maxAmount}">¥0 - ¥500</td>
+                                    <td>
+                                        <span th:class="'badge rounded-pill ' + (config.autoSettle ? 'bg-success' : 'bg-secondary')"
+                                              th:text="${config.autoSettle ? '是' : '否'}">是</span>
+                                    </td>
+                                    <td th:text="${config.settleDelayHours} + ' 小时'">24 小时</td>
+                                    <td>
+                                        <span th:class="'badge rounded-pill ' + (config.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary')"
+                                              th:text="${config.status == 'ACTIVE' ? '启用' : '禁用'}">启用</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/config/detail/{id}(id=${config.id})}" class="btn btn-outline-primary" title="详情">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a th:href="@{/config/edit/{id}(id=${config.id})}" class="btn btn-outline-secondary" title="编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a th:href="@{/config/delete/{id}(id=${config.id})}" 
+                                               class="btn btn-outline-danger" 
+                                               title="删除"
+                                               onclick="return confirm('确定要删除该分成配置吗？')">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(configs)}">
+                                    <td colspan="9" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <p class="mt-2">暂无分成配置数据</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="fragments/layout::scripts"></div>
+</body>
+</html>

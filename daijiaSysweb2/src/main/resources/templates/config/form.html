@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout::head('分成配置表单 - 代驾后台管理系统')"></head>
+<body>
+<div th:replace="fragments/layout::navbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="fragments/layout::sidebar"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div th:replace="fragments/layout::messages"></div>
+
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-gear text-secondary"></i> 
+                    <span th:if="${config.id == null}">新增分成配置</span>
+                    <span th:if="${config.id != null}">编辑分成配置</span>
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="/config/list" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回列表
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/config/save}" th:object="${config}" method="post">
+                        <input type="hidden" th:field="*{id}" />
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">配置名称 <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{configName}" class="form-control" placeholder="例如：标准分成配置" required>
+                            </div>
+                            <div class="col-md-6" th:if="${config.id != null}">
+                                <label class="form-label">状态</label>
+                                <select th:field="*{status}" class="form-select">
+                                    <option value="ACTIVE">启用</option>
+                                    <option value="INACTIVE">禁用</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-muted">分成比例配置</h6>
+                                <hr>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">平台抽成比例 (%) <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{platformRate}" class="form-control" placeholder="例如：15" min="0" max="100" step="0.01" required>
+                                <div class="form-text">平台收取的订单金额比例</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">司机分成比例 (%) <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{driverRate}" class="form-control" placeholder="例如：85" min="0" max="100" step="0.01" required>
+                                <div class="form-text">司机获得的订单金额比例</div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-muted">适用范围配置</h6>
+                                <hr>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">最低订单金额 (元) <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{minAmount}" class="form-control" placeholder="例如：0" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">最高订单金额 (元) <span class="text-danger">*</span></label>
+                                <input type="number" th:field="*{maxAmount}" class="form-control" placeholder="例如：500" min="0" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6 class="text-muted">自动清账配置</h6>
+                                <hr>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">订单完成自动清账</label>
+                                <select th:field="*{autoSettle}" class="form-select">
+                                    <option th:value="true">启用</option>
+                                    <option th:value="false">禁用</option>
+                                </select>
+                                <div class="form-text">订单完成后是否自动生成分成单并结算</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">清账延迟时间 (小时)</label>
+                                <input type="number" th:field="*{settleDelayHours}" class="form-control" placeholder="例如：24" min="0">
+                                <div class="form-text">订单完成后延迟多少小时自动清账</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mt-2">
+                            <div class="col-md-12">
+                                <label class="form-label">配置说明</label>
+                                <textarea th:field="*{description}" class="form-control" rows="3" placeholder="请输入配置说明"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg"></i> 保存
+                                </button>
+                                <a href="/config/list" class="btn btn-secondary ms-2">
+                                    <i class="bi bi-x-lg"></i> 取消
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="fragments/layout::scripts"></div>
+</body>
+</html>
