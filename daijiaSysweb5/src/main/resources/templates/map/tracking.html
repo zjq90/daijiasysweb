@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时跟踪 - 代驾管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+        }
+        body {
+            background-color: #f8f9fc;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+            z-index: 1000;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            border-radius: 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link.active {
+            border-left: 4px solid white;
+        }
+        .main-content {
+            margin-left: 250px;
+        }
+        .navbar-top {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 30px;
+        }
+        #map-container {
+            height: calc(100vh - 70px);
+            width: 100%;
+        }
+        .order-list-panel {
+            position: fixed;
+            right: 0;
+            top: 70px;
+            width: 320px;
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            overflow-y: auto;
+        }
+        .order-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .order-item:hover {
+            background: #f8f9fa;
+        }
+        .order-item.active {
+            background: #e3f2fd;
+            border-left: 3px solid var(--primary);
+        }
+        .marker-info {
+            min-width: 200px;
+        }
+        .pulse-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 3px solid white;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        .simulate-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 270px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="p-4 text-center">
+            <h4 class="text-white mb-0"><i class="fas fa-car-side me-2"></i>代驾管理</h4>
+        </div>
+        <nav class="mt-4">
+            <a th:href="@{/index}" class="nav-link" th:classappend="${currentPage == 'dashboard'} ? 'active' : ''">
+                <i class="fas fa-home me-3"></i>仪表盘
+            </a>
+            <a th:href="@{/order/list}" class="nav-link" th:classappend="${currentPage == 'order'} ? 'active' : ''">
+                <i class="fas fa-receipt me-3"></i>订单管理
+            </a>
+            <a th:href="@{/map/tracking}" class="nav-link" th:classappend="${currentPage == 'map'} ? 'active' : ''">
+                <i class="fas fa-map-marked-alt me-3"></i>实时跟踪
+            </a>
+            <a th:href="@{/emergency/list}" class="nav-link" th:classappend="${currentPage == 'emergency'} ? 'active' : ''">
+                <i class="fas fa-bell me-3"></i>安全求助
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <nav class="navbar-top d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2 text-primary"></i>实时跟踪</h5>
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span th:text="${session.adminName}">管理员</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/logout}"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="map-container"></div>
+
+        <div class="order-list-panel">
+            <div class="p-3 border-bottom">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>进行中订单</h6>
+            </div>
+            <div id="order-list">
+                <div class="text-center text-muted py-5">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mb-0">加载订单数据...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simulate-panel" id="simulate-panel" style="display: none;">
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted"><i class="fas fa-tools me-1"></i>测试模式：</span>
+            <button class="btn btn-sm btn-primary" id="btn-simulate">
+                <i class="fas fa-play me-1"></i>模拟位置更新
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-auto-simulate">
+                <i class="fas fa-sync me-1"></i>自动模拟
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=96a294712a22f0b3738402291fbd3b38"></script>
+    <script>
+        let map = null;
+        let activeOrderId = null;
+        let markers = {};
+        let autoSimulateInterval = null;
+        let currentOrder = null;
+
+        function initMap() {
+            map = new AMap.Map('map-container', {
+                resizeEnable: true,
+                zoom: 12,
+                center: [116.397428, 39.90923]
+            });
+            
+            map.addControl(new AMap.ToolBar());
+            map.addControl(new AMap.Scale());
+        }
+
+        function loadOrders() {
+            fetch('/map/api/all-locations')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderOrderList(data.orders, data.latestTraces);
+                        
+                        if (data.orders && data.orders.length > 0) {
+                            document.getElementById('simulate-panel').style.display = 'block';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('加载订单失败:', error);
+                });
+        }
+
+        function renderOrderList(orders, traces) {
+            const container = document.getElementById('order-list');
+            
+            if (!orders || orders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-car fa-3x mb-3 d-block text-secondary"></i>
+                        <p class="mb-0">暂无进行中的订单</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const trace = traces ? traces[order.id] : null;
+                const statusClass = order.status === 3 ? 'bg-primary' : 'bg-warning';
+                const statusText = getStatusText(order.status);
+                
+                html += `
+                    <div class="order-item" data-order-id="${order.id}" onclick="selectOrder(${order.id}, ${order.startLongitude}, ${order.startLatitude}, ${order.endLongitude}, ${order.endLatitude})">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="fw-semibold text-primary">${order.orderNo}</span>
+                            <span class="badge ${statusClass} status-badge">${statusText}</span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted"><i class="fas fa-user me-1"></i>${order.user?.realName || '未知用户'}</small>
+                            ${order.driver ? `<small class="text-muted ms-3"><i class="fas fa-car me-1"></i>${order.driver.realName}</small>` : ''}
+                        </div>
+                        <div class="text-truncate small text-muted">
+                            <i class="fas fa-map-marker-alt text-danger me-1"></i>${order.startAddress}
+                        </div>
+                        <div class="text-truncate small text-muted mt-1">
+                            <i class="fas fa-flag text-success me-1"></i>${order.endAddress}
+                        </div>
+                        ${trace ? `
+                            <div class="mt-2 small text-info">
+                                <i class="fas fa-location-arrow me-1"></i>
+                                当前位置: ${trace.latitude}, ${trace.longitude}
+                                ${trace.speed ? `| 速度: ${trace.speed} km/h` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                0: '待接单',
+                1: '已接单',
+                2: '已接驾',
+                3: '服务中',
+                4: '已完成',
+                5: '已取消'
+            };
+            return statusMap[status] || '未知';
+        }
+
+        function selectOrder(orderId, startLng, startLat, endLng, endLat) {
+            activeOrderId = orderId;
+            currentOrder = {
+                id: orderId,
+                startLng: startLng,
+                startLat: startLat,
+                endLng: endLng,
+                endLat: endLat
+            };
+
+            document.querySelectorAll('.order-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.orderId) === orderId) {
+                    item.classList.add('active');
+                }
+            });
+
+            clearMarkers();
+            showRoute(startLng, startLat, endLng, endLat);
+            loadOrderLocation(orderId);
+        }
+
+        function clearMarkers() {
+            Object.values(markers).forEach(marker => {
+                if (marker.setMap) marker.setMap(null);
+            });
+            markers = {};
+        }
+
+        function showRoute(startLng, startLat, endLng, endLat) {
+            const startMarker = new AMap.Marker({
+                position: [startLng, startLat],
+                icon: new AMap.Icon({
+                    image: 'https://webapi.amap.com/theme/v1.3/markers/n/start.png',
+                    size: new AMap.Size(25, 34),
+                    imageSize: new AMap.Size(25, 34)
+                }),
+                offset: new AMap.Pixel(-12, -34)
+            });
+
+            const endMarker = new AMap.Marker({
+                position: [endLng, endLat],
+                icon: new AMap.Icon({
+                    image: 'https://webapi.amap.com/theme/v1.3/markers/n/end.png',
+                    size: new AMap.Size(25, 34),
+                    imageSize: new AMap.Size(25, 34)
+                }),
+                offset: new AMap.Pixel(-12, -34)
+            });
+
+            map.add([startMarker, endMarker]);
+            markers.start = startMarker;
+            markers.end = endMarker;
+
+            drawDrivingRoute(startLng, startLat, endLng, endLat);
+            map.setFitView([startMarker, endMarker]);
+        }
+
+        function drawDrivingRoute(startLng, startLat, endLng, endLat) {
+            const driving = new AMap.Driving({
+                map: map,
+                panel: false,
+                hideMarkers: true
+            });
+
+            const startPoint = new AMap.LngLat(startLng, startLat);
+            const endPoint = new AMap.LngLat(endLng, endLat);
+
+            driving.search(startPoint, endPoint, function(status, result) {
+                if (status === 'complete') {
+                    markers.route = driving;
+                }
+            });
+        }
+
+        function loadOrderLocation(orderId) {
+            fetch(`/map/api/realtime/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.latestTrace) {
+                        updateDriverMarker(data.currentLng, data.currentLat, data);
+                    } else if (data.success && !data.latestTrace) {
+                        updateDriverMarker(data.startLng, data.startLat, data);
+                    }
+                });
+        }
+
+        function updateDriverMarker(lng, lat, data) {
+            if (markers.driver) {
+                markers.driver.setPosition([lng, lat]);
+            } else {
+                const driverIcon = new AMap.Marker({
+                    position: [lng, lat],
+                    icon: new AMap.Icon({
+                        image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="%23667eea"/><path d="M12 18 L16 18 L16 14 L24 14 L24 18 L28 18 L28 26 L12 26 Z" fill="white"/></svg>',
+                        size: new AMap.Size(40, 40),
+                        imageSize: new AMap.Size(40, 40)
+                    }),
+                    offset: new AMap.Pixel(-20, -20)
+                });
+
+                const infoWindow = new AMap.InfoWindow({
+                    content: createInfoContent(data),
+                    offset: new AMap.Pixel(0, -40)
+                });
+
+                driverIcon.on('click', function() {
+                    infoWindow.open(map, driverIcon.getPosition());
+                });
+
+                map.add(driverIcon);
+                markers.driver = driverIcon;
+                markers.infoWindow = infoWindow;
+            }
+        }
+
+        function createInfoContent(data) {
+            return `
+                <div class="marker-info p-2">
+                    <div class="fw-semibold text-primary mb-2"><i class="fas fa-car me-1"></i>司机位置</div>
+                    <div class="small">经度: ${data.currentLng || data.startLng}</div>
+                    <div class="small">纬度: ${data.currentLat || data.startLat}</div>
+                    ${data.speed ? `<div class="small">速度: ${data.speed} km/h</div>` : ''}
+                    ${data.estimateDistance ? `<div class="small">预计距离: ${data.estimateDistance} km</div>` : ''}
+                    ${data.estimateTime ? `<div class="small">预计时间: ${data.estimateTime} 分钟</div>` : ''}
+                </div>
+            `;
+        }
+
+        function simulateUpdate() {
+            if (!activeOrderId) {
+                alert('请先选择一个订单');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('orderId', activeOrderId);
+
+            fetch('/map/api/simulate-update', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadOrderLocation(activeOrderId);
+                    loadOrders();
+                }
+            });
+        }
+
+        function toggleAutoSimulate() {
+            const btn = document.getElementById('btn-auto-simulate');
+            
+            if (autoSimulateInterval) {
+                clearInterval(autoSimulateInterval);
+                autoSimulateInterval = null;
+                btn.innerHTML = '<i class="fas fa-sync me-1"></i>自动模拟';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-outline-secondary');
+            } else if (activeOrderId) {
+                autoSimulateInterval = setInterval(simulateUpdate, 3000);
+                btn.innerHTML = '<i class="fas fa-stop me-1"></i>停止模拟';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-danger');
+            } else {
+                alert('请先选择一个订单');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadOrders();
+            
+            document.getElementById('btn-simulate').addEventListener('click', simulateUpdate);
+            document.getElementById('btn-auto-simulate').addEventListener('click', toggleAutoSimulate);
+        });
+    </script>
+</body>
+</html>

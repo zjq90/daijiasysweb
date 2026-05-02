@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全求助 - 代驾管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+        }
+        body {
+            background-color: #f8f9fc;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            border-radius: 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link.active {
+            border-left: 4px solid white;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .navbar-top {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 30px;
+        }
+        .table-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        }
+        .emergency-alert {
+            animation: pulse 2s infinite;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .stat-alert {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        .test-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        .help-type-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="p-4 text-center">
+            <h4 class="text-white mb-0"><i class="fas fa-car-side me-2"></i>代驾管理</h4>
+        </div>
+        <nav class="mt-4">
+            <a th:href="@{/index}" class="nav-link" th:classappend="${currentPage == 'dashboard'} ? 'active' : ''">
+                <i class="fas fa-home me-3"></i>仪表盘
+            </a>
+            <a th:href="@{/order/list}" class="nav-link" th:classappend="${currentPage == 'order'} ? 'active' : ''">
+                <i class="fas fa-receipt me-3"></i>订单管理
+            </a>
+            <a th:href="@{/map/tracking}" class="nav-link" th:classappend="${currentPage == 'map'} ? 'active' : ''">
+                <i class="fas fa-map-marked-alt me-3"></i>实时跟踪
+            </a>
+            <a th:href="@{/emergency/list}" class="nav-link" th:classappend="${currentPage == 'emergency'} ? 'active' : ''">
+                <i class="fas fa-bell me-3"></i>安全求助
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <nav class="navbar-top d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0"><i class="fas fa-bell me-2 text-danger"></i>安全求助管理</h5>
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span th:text="${session.adminName}">管理员</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/logout}"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="test-panel">
+            <h6 class="mb-3"><i class="fas fa-tools me-2 text-primary"></i>测试功能</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <select class="form-select" id="testHelpType">
+                        <option value="1">乘客求助</option>
+                        <option value="2">司机求助</option>
+                        <option value="0">一般求助</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="testAddress" value="北京市朝阳区建国路" placeholder="地址">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="testContent" value="测试紧急求助" placeholder="求助内容">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-danger w-100" onclick="createTestHelp()">
+                        <i class="fas fa-siren me-1"></i>模拟求助
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-alert p-4 text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <h3 class="mb-0" id="count-pending">0</h3>
+                    <small>待处理</small>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card p-4 text-center" style="background: linear-gradient(135deg, #f59e0b, #f39c12); color: white;">
+                    <i class="fas fa-spinner fa-2x mb-2"></i>
+                    <h3 class="mb-0" id="count-processing">0</h3>
+                    <small>处理中</small>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card p-4 text-center" style="background: linear-gradient(135deg, #00c9a7, #00b894); color: white;">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="mb-0" id="count-completed">0</h3>
+                    <small>已处理</small>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card p-4 text-center" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h3 class="mb-0" id="count-closed">0</h3>
+                    <small>已关闭</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card table-card">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-list me-2 text-danger"></i>求助记录</h6>
+                <div>
+                    <select class="form-select form-select-sm d-inline-block w-auto" id="statusFilter" onchange="filterByStatus()">
+                        <option value="">全部状态</option>
+                        <option value="0">待处理</option>
+                        <option value="1">处理中</option>
+                        <option value="2">已处理</option>
+                        <option value="3">已关闭</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>求助编号</th>
+                                <th>类型</th>
+                                <th>关联订单</th>
+                                <th>求助人</th>
+                                <th>地址</th>
+                                <th>状态</th>
+                                <th>触发时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="help-list">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <div class="spinner-border text-danger mb-2" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mb-0">加载求助记录...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="handleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">处理求助</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="handleHelpId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">处理结果</label>
+                        <textarea class="form-control" id="handleResult" rows="4" placeholder="请输入处理结果"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="completeHandle()">确认处理</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">求助详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailContent">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script>
+        function loadStatistics() {
+            fetch('/emergency/api/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('count-pending').textContent = data.pending;
+                        document.getElementById('count-processing').textContent = data.processing;
+                        document.getElementById('count-completed').textContent = data.completed;
+                        document.getElementById('count-closed').textContent = data.closed;
+                    }
+                });
+        }
+
+        function loadHelpList() {
+            fetch('/emergency/api/pending')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderHelpList(data.list);
+                    }
+                });
+        }
+
+        function renderHelpList(helps) {
+            const container = document.getElementById('help-list');
+            
+            if (!helps || helps.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-shield-alt fa-3x mb-3 d-block text-secondary"></i>
+                            <p class="mb-0">暂无求助记录</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            helps.forEach(help => {
+                const helpTypeClass = help.helpType === 1 ? 'bg-danger' : 
+                                      help.helpType === 2 ? 'bg-warning' : 'bg-secondary';
+                const helpTypeText = getHelpTypeText(help.helpType);
+                const statusClass = getStatusClass(help.status);
+                const statusText = getStatusText(help.status);
+                const isPending = help.status === 0;
+                const isProcessing = help.status === 1;
+
+                html += `
+                    <tr${isPending ? ' class="table-danger bg-light-danger"' : ''}>
+                        <td>
+                            <span class="fw-semibold text-danger">${help.helpNo}</span>
+                            ${isPending ? '<span class="badge bg-danger ms-2 help-type-badge">紧急</span>' : ''}
+                        </td>
+                        <td>
+                            <span class="badge ${helpTypeClass} help-type-badge">${helpTypeText}</span>
+                        </td>
+                        <td>
+                            ${help.order ? help.order.orderNo : '-'}
+                        </td>
+                        <td>
+                            ${help.user ? help.user.realName : (help.driver ? help.driver.realName : '未知')}
+                        </td>
+                        <td style="max-width: 200px;" class="text-truncate" title="${help.address || ''}">
+                            ${help.address || '-'}
+                        </td>
+                        <td>
+                            <span class="badge bg-${statusClass} status-badge">${statusText}</span>
+                        </td>
+                        <td>
+                            ${formatDateTime(help.createTime)}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="showDetail(${help.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${isPending ? `
+                                <button class="btn btn-sm btn-outline-warning ms-1" onclick="startHandle(${help.id})">
+                                    <i class="fas fa-play"></i> 开始处理
+                                </button>
+                            ` : ''}
+                            ${isProcessing ? `
+                                <button class="btn btn-sm btn-outline-success ms-1" onclick="openHandleModal(${help.id})">
+                                    <i class="fas fa-check"></i> 完成处理
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function getHelpTypeText(type) {
+            const types = {
+                0: '一般求助',
+                1: '乘客求助',
+                2: '司机求助',
+                3: '系统检测'
+            };
+            return types[type] || '未知';
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                0: 'danger',
+                1: 'warning',
+                2: 'success',
+                3: 'secondary'
+            };
+            return classes[status] || 'secondary';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                0: '待处理',
+                1: '处理中',
+                2: '已处理',
+                3: '已关闭'
+            };
+            return texts[status] || '未知';
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN');
+        }
+
+        function showDetail(helpId) {
+            fetch(`/emergency/detail/${helpId}`)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const helpData = doc.getElementById('help-data');
+                    if (helpData) {
+                        const data = JSON.parse(helpData.textContent);
+                        renderDetailModal(data);
+                    }
+                });
+        }
+
+        function renderDetailModal(data) {
+            const content = document.getElementById('detailContent');
+            let html = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">求助编号</label>
+                        <p class="fw-semibold text-danger mb-0">${data.helpNo}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">状态</label>
+                        <p class="mb-0">
+                            <span class="badge bg-${getStatusClass(data.status)}">${getStatusText(data.status)}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">求助类型</label>
+                        <p class="mb-0">${getHelpTypeText(data.helpType)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">触发时间</label>
+                        <p class="mb-0">${formatDateTime(data.createTime)}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="text-muted small">求助地址</label>
+                        <p class="mb-0">${data.address || '-'}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">经度</label>
+                        <p class="mb-0">${data.longitude || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">纬度</label>
+                        <p class="mb-0">${data.latitude || '-'}</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="text-muted small">求助内容</label>
+                        <p class="mb-0">${data.content || '-'}</p>
+                    </div>
+                </div>
+            `;
+
+            if (data.handleResult) {
+                html += `
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="text-muted small">处理结果</label>
+                            <p class="mb-0">${data.handleResult}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">处理管理员</label>
+                            <p class="mb-0">${data.admin?.realName || data.admin?.username || '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">处理时间</label>
+                            <p class="mb-0">${formatDateTime(data.handleTime)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.latitude && data.longitude) {
+                html += `
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="text-muted small">查看地图位置</label>
+                            <p class="mb-0">
+                                <a href="https://uri.amap.com/marker?position=${data.longitude},${data.latitude}&name=求助位置" 
+                                   target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-map-marker-alt me-1"></i>在地图中查看
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+
+        function startHandle(helpId) {
+            const formData = new FormData();
+            formData.append('id', helpId);
+
+            fetch('/emergency/start', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('已开始处理');
+                    refreshData();
+                } else {
+                    alert(data.message || '操作失败');
+                }
+            });
+        }
+
+        function openHandleModal(helpId) {
+            document.getElementById('handleHelpId').value = helpId;
+            document.getElementById('handleResult').value = '';
+            new bootstrap.Modal(document.getElementById('handleModal')).show();
+        }
+
+        function completeHandle() {
+            const helpId = document.getElementById('handleHelpId').value;
+            const handleResult = document.getElementById('handleResult').value;
+
+            if (!handleResult.trim()) {
+                alert('请输入处理结果');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('id', helpId);
+            formData.append('handleResult', handleResult);
+
+            fetch('/emergency/complete', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('处理完成');
+                    bootstrap.Modal.getInstance(document.getElementById('handleModal')).hide();
+                    refreshData();
+                } else {
+                    alert(data.message || '操作失败');
+                }
+            });
+        }
+
+        function createTestHelp() {
+            const helpType = document.getElementById('testHelpType').value;
+            const address = document.getElementById('testAddress').value;
+            const content = document.getElementById('testContent').value;
+
+            const formData = new FormData();
+            formData.append('helpType', helpType);
+            formData.append('address', address);
+            formData.append('content', content);
+            formData.append('latitude', '39.9042');
+            formData.append('longitude', '116.4074');
+            formData.append('userId', '1');
+
+            fetch('/emergency/api/create', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('求助已创建，编号：' + data.helpNo);
+                    refreshData();
+                } else {
+                    alert('创建失败');
+                }
+            });
+        }
+
+        function refreshData() {
+            loadStatistics();
+            loadHelpList();
+        }
+
+        function filterByStatus() {
+            refreshData();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            setInterval(refreshData, 30000);
+        });
+    </script>
+</body>
+</html>
