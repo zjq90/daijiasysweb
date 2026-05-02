@@ -1,0 +1,80 @@
+{
+	"name": "代驾司机端",
+	"appid": "__UNI__DAIJIA001",
+	"description": "代驾系统司机端应用",
+	"versionName": "1.0.0",
+	"versionCode": "100",
+	"transformPx": false,
+	"app-plus": {
+		"usingComponents": true,
+		"nvueStyleCompiler": "uni-app",
+		"compilerVersion": 3,
+		"splashscreen": {
+			"alwaysShowBeforeRender": true,
+			"waiting": true,
+			"autoclose": true,
+			"delay": 0
+		},
+		"modules": {
+			"Geolocation": {},
+			"Map": {},
+			"Camera": {},
+			"Record": {},
+			"Storage": {}
+		},
+		"distribute": {
+			"android": {
+				"permissions": [
+					"<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+					"<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+					"<uses-permission android:name=\"android.permission.ACCESS_BACKGROUND_LOCATION\"/>",
+					"<uses-permission android:name=\"android.permission.CAMERA\"/>",
+					"<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+					"<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>",
+					"<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+					"<uses-permission android:name=\"android.permission.INTERNET\"/>"
+				]
+			},
+			"ios": {
+				"plist": {
+					"NSCameraUsageDescription": "需要访问您的相机以进行身份验证和拍照",
+					"NSMicrophoneUsageDescription": "需要访问您的麦克风以进行紧急求助录音",
+					"NSLocationWhenInUseUsageDescription": "需要访问您的位置以进行订单配送和导航",
+					"NSLocationAlwaysUsageDescription": "需要后台访问您的位置以进行订单配送和导航",
+					"NSPhotoLibraryAddUsageDescription": "需要访问您的相册以保存图片",
+					"NSPhotoLibraryUsageDescription": "需要访问您的相册以选择图片"
+				}
+			}
+		}
+	},
+	"quickapp": {},
+	"mp-weixin": {
+		"appid": "",
+		"setting": {
+			"urlCheck": false,
+			"es6": true,
+			"enhance": true,
+			"postcss": true,
+			"minified": true
+		},
+		"usingComponents": true,
+		"permission": {
+			"scope.userLocation": {
+				"desc": "您的位置信息将用于订单配送和导航"
+			}
+		}
+	},
+	"mp-alipay": {
+		"usingComponents": true
+	},
+	"mp-baidu": {
+		"usingComponents": true
+	},
+	"mp-toutiao": {
+		"usingComponents": true
+	},
+	"uniStatistics": {
+		"enable": true
+	},
+	"vueVersion": "3"
+}
