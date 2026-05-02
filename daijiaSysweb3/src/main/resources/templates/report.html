@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <div th:fragment="content">
+        <!-- 页面内容开始 -->
+        
+        <!-- 快速操作栏 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="generateDailyReport()">
+                    <i class="bi bi-file-earmark-plus me-2"></i>生成今日报表
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100" onclick="generateTestReports()">
+                    <i class="bi bi-magic me-2"></i>生成测试数据
+                </button>
+            </div>
+        </div>
+        
+        <!-- 关键指标卡片 -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">今日订单量</h6>
+                                <h3 class="mb-0" id="today-orders">0</h3>
+                            </div>
+                            <div class="stat-icon bg-primary text-white">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">成交率</h6>
+                                <h3 class="mb-0" id="completion-rate">0%</h3>
+                            </div>
+                            <div class="stat-icon bg-success text-white">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">司机收入</h6>
+                                <h3 class="mb-0" id="driver-income">¥0</h3>
+                            </div>
+                            <div class="stat-icon bg-warning text-white">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">投诉率</h6>
+                                <h3 class="mb-0" id="complaint-rate">0%</h3>
+                            </div>
+                            <div class="stat-icon bg-danger text-white">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图表行 -->
+        <div class="row">
+            <!-- 订单趋势图 -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>订单趋势分析</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary active" onclick="setTimeRange(7)">7天</button>
+                            <button class="btn btn-outline-primary" onclick="setTimeRange(30)">30天</button>
+                            <button class="btn btn-outline-primary" onclick="setTimeRange(90)">90天</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="orderTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 收入趋势图 -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>收入趋势分析</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary active" onclick="setTimeRange(7)">7天</button>
+                            <button class="btn btn-outline-primary" onclick="setTimeRange(30)">30天</button>
+                            <button class="btn btn-outline-primary" onclick="setTimeRange(90)">90天</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 报表列表 -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-table me-2"></i>运营报表列表</h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="report-type-filter" style="width: 120px;">
+                        <option value="">全部类型</option>
+                        <option value="DAILY">日报</option>
+                        <option value="WEEKLY">周报</option>
+                        <option value="MONTHLY">月报</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshReportList()">
+                        <i class="bi bi-arrow-repeat"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>报表日期</th>
+                                <th>类型</th>
+                                <th>订单总数</th>
+                                <th>完成订单</th>
+                                <th>成交率</th>
+                                <th>总营收</th>
+                                <th>投诉数</th>
+                                <th>投诉率</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-list-tbody">
+                            <!-- 动态加载数据 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="report-list-empty" class="empty-state d-none">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <h5>暂无报表数据</h5>
+                    <p>点击"生成今日报表"或"生成测试数据"开始</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面内容结束 -->
+    </div>
+    
+    <!-- 报表详情模态框 -->
+    <div class="modal fade" id="reportDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">报表详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="report-detail-content">
+                    <!-- 动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        // 图表实例
+        let orderTrendChart, revenueTrendChart;
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveMenu('menu-report');
+            setPageTitle('运营报表');
+            
+            // 初始化图表
+            initCharts();
+            
+            // 加载数据
+            loadReportData();
+        });
+        
+        // 初始化图表
+        function initCharts() {
+            // 订单趋势图
+            const orderCtx = document.getElementById('orderTrendChart').getContext('2d');
+            orderTrendChart = new Chart(orderCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '总订单',
+                            data: [],
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: '完成订单',
+                            data: [],
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: '取消订单',
+                            data: [],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 收入趋势图
+            const revenueCtx = document.getElementById('revenueTrendChart').getContext('2d');
+            revenueTrendChart = new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '营收（元）',
+                            data: [],
+                            backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 加载报表数据
+        function loadReportData() {
+            // 加载Dashboard数据
+            ajaxRequest('/api/report/dashboard').then(data => {
+                updateDashboardStats(data);
+            });
+            
+            // 加载订单趋势
+            ajaxRequest('/api/report/trend/order').then(data => {
+                updateOrderTrendChart(data);
+            });
+            
+            // 加载收入趋势
+            ajaxRequest('/api/report/trend/revenue').then(data => {
+                updateRevenueTrendChart(data);
+            });
+            
+            // 加载报表列表
+            refreshReportList();
+        }
+        
+        // 更新Dashboard统计
+        function updateDashboardStats(data) {
+            const stats = data.stats || {};
+            
+            document.getElementById('today-orders').textContent = stats.todayOrders || 0;
+            document.getElementById('completion-rate').textContent = 
+                parseFloat(stats.todayCompletionRate || 0).toFixed(1) + '%';
+            document.getElementById('driver-income').textContent = 
+                formatCurrency(stats.todayAvgDriverIncome || 0);
+            document.getElementById('complaint-rate').textContent = 
+                parseFloat(stats.todayComplaintRate || 0).toFixed(2) + '%';
+        }
+        
+        // 更新订单趋势图
+        function updateOrderTrendChart(data) {
+            if (!data || data.length === 0) return;
+            
+            const labels = data.map(item => {
+                const date = new Date(item.date);
+                return (date.getMonth() + 1) + '/' + date.getDate();
+            });
+            
+            orderTrendChart.data.labels = labels;
+            orderTrendChart.data.datasets[0].data = data.map(item => item.totalOrders || 0);
+            orderTrendChart.data.datasets[1].data = data.map(item => item.completedOrders || 0);
+            orderTrendChart.data.datasets[2].data = data.map(item => item.cancelledOrders || 0);
+            orderTrendChart.update();
+        }
+        
+        // 更新收入趋势图
+        function updateRevenueTrendChart(data) {
+            if (!data || data.length === 0) return;
+            
+            const labels = data.map(item => {
+                const date = new Date(item.date);
+                return (date.getMonth() + 1) + '/' + date.getDate();
+            });
+            
+            revenueTrendChart.data.labels = labels;
+            revenueTrendChart.data.datasets[0].data = data.map(item => item.totalRevenue || 0);
+            revenueTrendChart.update();
+        }
+        
+        // 刷新报表列表
+        function refreshReportList() {
+            ajaxRequest('/api/report/daily').then(data => {
+                updateReportList(data);
+            });
+        }
+        
+        // 更新报表列表
+        function updateReportList(data) {
+            const tbody = document.getElementById('report-list-tbody');
+            const emptyDiv = document.getElementById('report-list-empty');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '';
+                emptyDiv.classList.remove('d-none');
+                return;
+            }
+            
+            emptyDiv.classList.add('d-none');
+            let html = '';
+            data.slice(0, 20).forEach(report => {
+                const typeText = report.reportType === 'DAILY' ? '日报' : 
+                                report.reportType === 'WEEKLY' ? '周报' : '月报';
+                const statusClass = report.status === 'COMPLETED' ? 'status-active' : 'status-pending';
+                const statusText = report.status === 'COMPLETED' ? '已完成' : '生成中';
+                
+                html += `
+                    <tr>
+                        <td>${report.reportDate || '-'}</td>
+                        <td><span class="badge bg-secondary">${typeText}</span></td>
+                        <td>${report.totalOrders || 0}</td>
+                        <td>${report.completedOrders || 0}</td>
+                        <td>${parseFloat(report.completionRate || 0).toFixed(1)}%</td>
+                        <td>${formatCurrency(report.totalRevenue)}</td>
+                        <td>${report.complaintCount || 0}</td>
+                        <td>${parseFloat(report.complaintRate || 0).toFixed(2)}%</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewReportDetail(${report.id})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteReport(${report.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        // 生成今日报表
+        function generateDailyReport() {
+            ajaxRequest('/api/report/generate/daily?date=' + new Date().toISOString().split('T')[0], 'POST')
+            .then(data => {
+                if (data.success) {
+                    showToast('生成今日报表成功', 'success');
+                    loadReportData();
+                } else {
+                    showToast(data.message || '生成失败', 'error');
+                }
+            });
+        }
+        
+        // 生成测试报表数据
+        function generateTestReports() {
+            if (!confirm('确认生成30天的测试报表数据？')) return;
+            
+            ajaxRequest('/api/report/generate/test?days=30', 'POST')
+            .then(data => {
+                if (data.success) {
+                    showToast('生成测试数据成功', 'success');
+                    loadReportData();
+                } else {
+                    showToast(data.message || '生成失败', 'error');
+                }
+            });
+        }
+        
+        // 查看报表详情
+        function viewReportDetail(id) {
+            ajaxRequest('/api/report/detail/' + id).then(data => {
+                if (data) {
+                    showReportDetailModal(data);
+                }
+            });
+        }
+        
+        // 显示报表详情模态框
+        function showReportDetailModal(report) {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr><td><strong>报表日期：</strong></td><td>${report.reportDate || '-'}</td></tr>
+                            <tr><td><strong>报表类型：</strong></td><td>${report.reportType === 'DAILY' ? '日报' : report.reportType === 'WEEKLY' ? '周报' : '月报'}</td></tr>
+                            <tr><td><strong>生成时间：</strong></td><td>${formatDate(report.createTime)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr><td><strong>订单总数：</strong></td><td>${report.totalOrders || 0}</td></tr>
+                            <tr><td><strong>完成订单：</strong></td><td>${report.completedOrders || 0}</td></tr>
+                            <tr><td><strong>取消订单：</strong></td><td>${report.cancelledOrders || 0}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">成交率</h6>
+                        <h4 class="text-success">${parseFloat(report.completionRate || 0).toFixed(1)}%</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">总营收</h6>
+                        <h4 class="text-primary">${formatCurrency(report.totalRevenue)}</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">平均订单金额</h6>
+                        <h4 class="text-info">${formatCurrency(report.avgOrderAmount)}</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">投诉率</h6>
+                        <h4 class="text-warning">${parseFloat(report.complaintRate || 0).toFixed(2)}%</h4>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-muted">司机数据</h6>
+                        <p class="mb-1">在线司机：${report.onlineDrivers || 0}</p>
+                        <p class="mb-1">活跃司机：${report.activeDrivers || 0}</p>
+                        <p class="mb-0">平均收入：${formatCurrency(report.avgDriverIncome)}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">营销数据</h6>
+                        <p class="mb-1">优惠订单：${report.promotionOrders || 0}</p>
+                        <p class="mb-1">优惠金额：${formatCurrency(report.totalDiscount)}</p>
+                        <p class="mb-0">激励金额：${formatCurrency(report.totalIncentive)}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">评价数据</h6>
+                        <p class="mb-1">平均评分：${report.avgRating || '-'}</p>
+                        <p class="mb-0">5星好评：${report.fiveStarCount || 0}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('report-detail-content').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('reportDetailModal')).show();
+        }
+        
+        // 删除报表
+        function deleteReport(id) {
+            if (!confirm('确认删除该报表？')) return;
+            
+            ajaxRequest('/api/report/delete/' + id, 'POST').then(data => {
+                if (data.success) {
+                    showToast('删除成功', 'success');
+                    refreshReportList();
+                } else {
+                    showToast(data.message || '删除失败', 'error');
+                }
+            });
+        }
+        
+        // 设置时间范围
+        function setTimeRange(days) {
+            // 这里可以根据时间范围重新加载数据
+            showToast(`已切换到${days}天视图`, 'info');
+        }
+    </script>
+</body>
+</html>

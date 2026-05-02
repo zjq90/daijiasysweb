@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <div th:fragment="content">
+        <!-- 页面内容开始 -->
+        
+        <!-- 快速操作栏 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="showCreateModal()">
+                    <i class="bi bi-plus-lg me-2"></i>新建优惠活动
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100" onclick="generateTestData()">
+                    <i class="bi bi-magic me-2"></i>生成测试数据
+                </button>
+            </div>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-primary" id="stat-total">0</h3>
+                        <p class="text-muted mb-0">活动总数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-success" id="stat-active">0</h3>
+                        <p class="text-muted mb-0">进行中</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-warning" id="stat-pending">0</h3>
+                        <p class="text-muted mb-0">待发布</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-secondary" id="stat-expired">0</h3>
+                        <p class="text-muted mb-0">已过期</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-info" id="stat-issued">0</h3>
+                        <p class="text-muted mb-0">已发放</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-success" id="stat-used">0</h3>
+                        <p class="text-muted mb-0">已使用</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 即将过期提醒 -->
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>即将过期的活动</h5>
+            </div>
+            <div class="card-body" id="expiring-activities">
+                <p class="text-muted mb-0 text-center">暂无即将过期的活动</p>
+            </div>
+        </div>
+        
+        <!-- 活动列表 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-percent me-2"></i>优惠活动列表</h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="activity-type-filter" style="width: 150px;">
+                        <option value="">全部类型</option>
+                        <option value="NEW_USER">新人专享</option>
+                        <option value="FULL_REDUCTION">满减优惠</option>
+                        <option value="DISCOUNT">折扣优惠</option>
+                        <option value="COUPON">优惠券</option>
+                        <option value="TIME_LIMITED">限时优惠</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="activity-status-filter" style="width: 120px;">
+                        <option value="">全部状态</option>
+                        <option value="DRAFT">草稿</option>
+                        <option value="PENDING">待发布</option>
+                        <option value="ACTIVE">进行中</option>
+                        <option value="PAUSED">暂停</option>
+                        <option value="EXPIRED">已过期</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshActivityList()">
+                        <i class="bi bi-arrow-repeat"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>活动编号</th>
+                                <th>活动名称</th>
+                                <th>活动类型</th>
+                                <th>优惠规则</th>
+                                <th>开始时间</th>
+                                <th>结束时间</th>
+                                <th>状态</th>
+                                <th>发放/使用</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-list-tbody">
+                            <!-- 动态加载数据 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="activity-list-empty" class="empty-state d-none">
+                    <i class="bi bi-percent"></i>
+                    <h5>暂无优惠活动</h5>
+                    <p>点击"新建优惠活动"或"生成测试数据"开始</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面内容结束 -->
+    </div>
+    
+    <!-- 新建/编辑活动模态框 -->
+    <div class="modal fade" id="activityModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="activity-modal-title">新建优惠活动</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="activity-form">
+                        <input type="hidden" id="activity-id">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">活动名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="activity-name" placeholder="请输入活动名称" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">活动类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="activity-type" required>
+                                        <option value="">请选择</option>
+                                        <option value="NEW_USER">新人专享</option>
+                                        <option value="FULL_REDUCTION">满减优惠</option>
+                                        <option value="DISCOUNT">折扣优惠</option>
+                                        <option value="COUPON">优惠券</option>
+                                        <option value="TIME_LIMITED">限时优惠</option>
+                                        <option value="OTHER">其他优惠</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">优惠类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="discount-type" required onchange="toggleDiscountFields()">
+                                        <option value="">请选择</option>
+                                        <option value="FIXED_AMOUNT">固定金额减免</option>
+                                        <option value="PERCENTAGE">百分比折扣</option>
+                                        <option value="FULL_REDUCTION">满减（满X减Y）</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">适用用户类型</label>
+                                    <select class="form-select" id="user-type">
+                                        <option value="ALL">全部用户</option>
+                                        <option value="NEW_USER">仅新用户</option>
+                                        <option value="VIP_USER">仅VIP用户</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 固定金额减免字段 -->
+                        <div class="row" id="fixed-amount-fields" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">减免金额 <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="discount-amount" placeholder="请输入减免金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 百分比折扣字段 -->
+                        <div class="row" id="percentage-fields" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">折扣比例（如0.8表示8折）</label>
+                                    <input type="number" class="form-control" id="discount-rate" placeholder="0.8" step="0.01" min="0" max="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">最大减免金额（封顶）</label>
+                                    <input type="number" class="form-control" id="max-discount-amount" placeholder="封顶金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 满减字段 -->
+                        <div class="row" id="full-reduction-fields" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">满减门槛（满X元）</label>
+                                    <input type="number" class="form-control" id="threshold-amount" placeholder="门槛金额" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">减免金额（减Y元）</label>
+                                    <input type="number" class="form-control" id="full-reduction-amount" placeholder="减免金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">开始时间 <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="start-time" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">结束时间 <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="end-time" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">发放总量</label>
+                                    <input type="number" class="form-control" id="total-quantity" placeholder="发放总数" value="1000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">每人限领数量</label>
+                                    <input type="number" class="form-control" id="per-user-limit" placeholder="限领数量" value="1">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">预算金额</label>
+                                    <input type="number" class="form-control" id="budget-amount" placeholder="预算金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">排序</label>
+                                    <input type="number" class="form-control" id="sort-order" placeholder="排序数字" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">自动发放</label>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="auto-issue">
+                                        <label class="form-check-label" for="auto-issue">
+                                            自动发放给符合条件的用户
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">活动描述</label>
+                            <textarea class="form-control" id="activity-description" rows="3" placeholder="请输入活动描述"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveActivity()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveMenu('menu-promotion');
+            setPageTitle('优惠活动');
+            
+            // 加载数据
+            loadPromotionData();
+            
+            // 设置默认时间
+            setDefaultTime();
+        });
+        
+        // 设置默认时间
+        function setDefaultTime() {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('start-time').value = formatDateTimeLocal(tomorrow);
+            document.getElementById('end-time').value = formatDateTimeLocal(nextMonth);
+        }
+        
+        // 格式化时间为 datetime-local 格式
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // 切换优惠类型字段显示
+        function toggleDiscountFields() {
+            const type = document.getElementById('discount-type').value;
+            
+            document.getElementById('fixed-amount-fields').style.display = 'none';
+            document.getElementById('percentage-fields').style.display = 'none';
+            document.getElementById('full-reduction-fields').style.display = 'none';
+            
+            switch (type) {
+                case 'FIXED_AMOUNT':
+                    document.getElementById('fixed-amount-fields').style.display = 'flex';
+                    break;
+                case 'PERCENTAGE':
+                    document.getElementById('percentage-fields').style.display = 'flex';
+                    break;
+                case 'FULL_REDUCTION':
+                    document.getElementById('full-reduction-fields').style.display = 'flex';
+                    break;
+            }
+        }
+        
+        // 加载优惠活动数据
+        function loadPromotionData() {
+            // 加载统计数据
+            ajaxRequest('/api/promotion/stats').then(data => {
+                updateStats(data);
+            });
+            
+            // 加载即将过期的活动
+            ajaxRequest('/api/promotion/expiring').then(data => {
+                updateExpiringActivities(data);
+            });
+            
+            // 加载活动列表
+            refreshActivityList();
+        }
+        
+        // 更新统计数据
+        function updateStats(data) {
+            document.getElementById('stat-total').textContent = data.total || 0;
+            document.getElementById('stat-active').textContent = data.active || 0;
+            document.getElementById('stat-pending').textContent = data.pending || 0;
+            document.getElementById('stat-expired').textContent = data.expired || 0;
+            document.getElementById('stat-issued').textContent = data.totalIssued || 0;
+            document.getElementById('stat-used').textContent = data.totalUsed || 0;
+        }
+        
+        // 更新即将过期的活动
+        function updateExpiringActivities(data) {
+            const container = document.getElementById('expiring-activities');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0 text-center">暂无即将过期的活动</p>';
+                return;
+            }
+            
+            let html = '<div class="row">';
+            data.forEach(activity => {
+                const daysLeft = Math.ceil((new Date(activity.endTime) - new Date()) / (1000 * 60 * 60 * 24));
+                html += `
+                    <div class="col-md-4">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h6 class="card-title">${activity.activityName}</h6>
+                                <p class="card-text text-muted small mb-1">${activity.description || '暂无描述'}</p>
+                                <p class="text-warning mb-0">
+                                    <i class="bi bi-clock"></i> 
+                                    剩余 <strong>${daysLeft}</strong> 天过期
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // 刷新活动列表
+        function refreshActivityList() {
+            ajaxRequest('/api/promotion/list').then(data => {
+                updateActivityList(data);
+            });
+        }
+        
+        // 更新活动列表
+        function updateActivityList(data) {
+            const tbody = document.getElementById('activity-list-tbody');
+            const emptyDiv = document.getElementById('activity-list-empty');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '';
+                emptyDiv.classList.remove('d-none');
+                return;
+            }
+            
+            emptyDiv.classList.add('d-none');
+            let html = '';
+            data.forEach(activity => {
+                const typeText = getActivityTypeText(activity.activityType);
+                const discountRule = getDiscountRule(activity);
+                const statusClass = getStatusClass(activity.status);
+                const statusText = getStatusText(activity.status);
+                
+                html += `
+                    <tr>
+                        <td><code>${activity.activityNo || '-'}</code></td>
+                        <td>${activity.activityName || '-'}</td>
+                        <td><span class="badge bg-info">${typeText}</span></td>
+                        <td>${discountRule}</td>
+                        <td>${formatDate(activity.startTime)}</td>
+                        <td>${formatDate(activity.endTime)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${activity.issuedQuantity || 0} / ${activity.usedQuantity || 0}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                ${activity.status === 'DRAFT' || activity.status === 'PENDING' ? 
+                                    `<button class="btn btn-outline-success" onclick="startActivity(${activity.id})" title="启动">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>` : ''}
+                                ${activity.status === 'ACTIVE' ? 
+                                    `<button class="btn btn-outline-warning" onclick="pauseActivity(${activity.id})" title="暂停">
+                                        <i class="bi bi-pause-fill"></i>
+                                    </button>` : ''}
+                                ${activity.status === 'PAUSED' ? 
+                                    `<button class="btn btn-outline-success" onclick="resumeActivity(${activity.id})" title="恢复">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>` : ''}
+                                <button class="btn btn-outline-primary" onclick="editActivity(${activity.id})" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteActivity(${activity.id})" title="删除">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        // 获取优惠规则描述
+        function getDiscountRule(activity) {
+            switch (activity.discountType) {
+                case 'FIXED_AMOUNT':
+                    return `减 ${formatCurrency(activity.discountAmount)}`;
+                case 'PERCENTAGE':
+                    return `${(activity.discountRate * 10).toFixed(0)}折，封顶 ${formatCurrency(activity.maxDiscountAmount)}`;
+                case 'FULL_REDUCTION':
+                    return `满 ${formatCurrency(activity.thresholdAmount)} 减 ${formatCurrency(activity.discountAmount)}`;
+                default:
+                    return '-';
+            }
+        }
+        
+        // 获取活动类型文本
+        function getActivityTypeText(type) {
+            const map = {
+                'NEW_USER': '新人专享',
+                'FULL_REDUCTION': '满减优惠',
+                'DISCOUNT': '折扣优惠',
+                'COUPON': '优惠券',
+                'TIME_LIMITED': '限时优惠',
+                'OTHER': '其他优惠'
+            };
+            return map[type] || type;
+        }
+        
+        // 获取状态样式
+        function getStatusClass(status) {
+            switch (status) {
+                case 'ACTIVE': return 'status-active';
+                case 'DRAFT': return 'status-pending';
+                case 'PENDING': return 'status-pending';
+                case 'PAUSED': return 'status-pending';
+                case 'EXPIRED': return 'status-completed';
+                case 'CANCELLED': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const map = {
+                'DRAFT': '草稿',
+                'PENDING': '待发布',
+                'ACTIVE': '进行中',
+                'PAUSED': '暂停',
+                'EXPIRED': '已过期',
+                'CANCELLED': '已取消'
+            };
+            return map[status] || status;
+        }
+        
+        // 显示新建模态框
+        function showCreateModal() {
+            document.getElementById('activity-modal-title').textContent = '新建优惠活动';
+            document.getElementById('activity-form').reset();
+            document.getElementById('activity-id').value = '';
+            setDefaultTime();
+            toggleDiscountFields();
+            new bootstrap.Modal(document.getElementById('activityModal')).show();
+        }
+        
+        // 编辑活动
+        function editActivity(id) {
+            ajaxRequest('/api/promotion/detail/' + id).then(data => {
+                if (data) {
+                    document.getElementById('activity-modal-title').textContent = '编辑优惠活动';
+                    document.getElementById('activity-id').value = data.id;
+                    document.getElementById('activity-name').value = data.activityName || '';
+                    document.getElementById('activity-type').value = data.activityType || '';
+                    document.getElementById('discount-type').value = data.discountType || '';
+                    document.getElementById('user-type').value = data.applicableUserType || 'ALL';
+                    document.getElementById('discount-amount').value = data.discountAmount || '';
+                    document.getElementById('discount-rate').value = data.discountRate || '';
+                    document.getElementById('max-discount-amount').value = data.maxDiscountAmount || '';
+                    document.getElementById('threshold-amount').value = data.thresholdAmount || '';
+                    document.getElementById('full-reduction-amount').value = data.discountAmount || '';
+                    document.getElementById('total-quantity').value = data.totalQuantity || 0;
+                    document.getElementById('per-user-limit').value = data.perUserLimit || 1;
+                    document.getElementById('budget-amount').value = data.budgetAmount || '';
+                    document.getElementById('sort-order').value = data.sortOrder || 0;
+                    document.getElementById('auto-issue').checked = data.autoIssue || false;
+                    document.getElementById('activity-description').value = data.description || '';
+                    
+                    if (data.startTime) {
+                        document.getElementById('start-time').value = formatDateTimeLocal(new Date(data.startTime));
+                    }
+                    if (data.endTime) {
+                        document.getElementById('end-time').value = formatDateTimeLocal(new Date(data.endTime));
+                    }
+                    
+                    toggleDiscountFields();
+                    new bootstrap.Modal(document.getElementById('activityModal')).show();
+                }
+            });
+        }
+        
+        // 保存活动
+        function saveActivity() {
+            const id = document.getElementById('activity-id').value;
+            const discountType = document.getElementById('discount-type').value;
+            
+            const data = {
+                activityName: document.getElementById('activity-name').value,
+                activityType: document.getElementById('activity-type').value,
+                discountType: discountType,
+                applicableUserType: document.getElementById('user-type').value,
+                totalQuantity: parseInt(document.getElementById('total-quantity').value) || 0,
+                perUserLimit: parseInt(document.getElementById('per-user-limit').value) || 1,
+                budgetAmount: parseFloat(document.getElementById('budget-amount').value) || null,
+                sortOrder: parseInt(document.getElementById('sort-order').value) || 0,
+                autoIssue: document.getElementById('auto-issue').checked,
+                description: document.getElementById('activity-description').value,
+                startTime: document.getElementById('start-time').value ? new Date(document.getElementById('start-time').value).toISOString() : null,
+                endTime: document.getElementById('end-time').value ? new Date(document.getElementById('end-time').value).toISOString() : null
+            };
+            
+            // 根据优惠类型设置优惠金额
+            switch (discountType) {
+                case 'FIXED_AMOUNT':
+                    data.discountAmount = parseFloat(document.getElementById('discount-amount').value) || null;
+                    break;
+                case 'PERCENTAGE':
+                    data.discountRate = parseFloat(document.getElementById('discount-rate').value) || null;
+                    data.maxDiscountAmount = parseFloat(document.getElementById('max-discount-amount').value) || null;
+                    break;
+                case 'FULL_REDUCTION':
+                    data.thresholdAmount = parseFloat(document.getElementById('threshold-amount').value) || null;
+                    data.discountAmount = parseFloat(document.getElementById('full-reduction-amount').value) || null;
+                    break;
+            }
+            
+            const url = id ? '/api/promotion/update' : '/api/promotion/create';
+            if (id) {
+                data.id = parseInt(id);
+            }
+            
+            ajaxRequest(url, 'POST', data).then(result => {
+                if (result.success) {
+                    showToast('保存成功', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('activityModal')).hide();
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '保存失败', 'error');
+                }
+            });
+        }
+        
+        // 启动活动
+        function startActivity(id) {
+            if (!confirm('确认启动该活动？')) return;
+            
+            ajaxRequest('/api/promotion/start/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('启动成功', 'success');
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 暂停活动
+        function pauseActivity(id) {
+            if (!confirm('确认暂停该活动？')) return;
+            
+            ajaxRequest('/api/promotion/pause/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('暂停成功', 'success');
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 恢复活动
+        function resumeActivity(id) {
+            if (!confirm('确认恢复该活动？')) return;
+            
+            ajaxRequest('/api/promotion/resume/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('恢复成功', 'success');
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 删除活动
+        function deleteActivity(id) {
+            if (!confirm('确认删除该活动？')) return;
+            
+            ajaxRequest('/api/promotion/delete/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('删除成功', 'success');
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '删除失败', 'error');
+                }
+            });
+        }
+        
+        // 生成测试数据
+        function generateTestData() {
+            if (!confirm('确认生成测试优惠活动数据？')) return;
+            
+            ajaxRequest('/api/promotion/generate/test?count=5', 'POST').then(result => {
+                if (result.success) {
+                    showToast('生成测试数据成功', 'success');
+                    loadPromotionData();
+                } else {
+                    showToast(result.message || '生成失败', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

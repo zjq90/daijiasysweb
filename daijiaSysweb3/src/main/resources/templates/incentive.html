@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <div th:fragment="content">
+        <!-- 页面内容开始 -->
+        
+        <!-- 快速操作栏 -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="showCreateModal()">
+                    <i class="bi bi-plus-lg me-2"></i>新建激励活动
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100" onclick="generateTestData()">
+                    <i class="bi bi-magic me-2"></i>生成测试数据
+                </button>
+            </div>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-primary" id="stat-total">0</h3>
+                        <p class="text-muted mb-0">活动总数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-success" id="stat-active">0</h3>
+                        <p class="text-muted mb-0">进行中</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-warning" id="stat-pending">0</h3>
+                        <p class="text-muted mb-0">待发布</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-secondary" id="stat-expired">0</h3>
+                        <p class="text-muted mb-0">已过期</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-info" id="stat-drivers">0</h3>
+                        <p class="text-muted mb-0">受益司机</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="text-success" id="stat-orders">0</h3>
+                        <p class="text-muted mb-0">受益订单</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 活动列表 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>激励奖励活动列表</h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="activity-type-filter" style="width: 150px;">
+                        <option value="">全部类型</option>
+                        <option value="ORDER_BONUS">冲单奖励</option>
+                        <option value="RUSH_HOUR_BONUS">高峰补贴</option>
+                        <option value="NEW_DRIVER_BONUS">新人奖励</option>
+                        <option value="ATTENDANCE_BONUS">出勤奖励</option>
+                        <option value="AREA_BONUS">区域补贴</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="activity-status-filter" style="width: 120px;">
+                        <option value="">全部状态</option>
+                        <option value="DRAFT">草稿</option>
+                        <option value="PENDING">待发布</option>
+                        <option value="ACTIVE">进行中</option>
+                        <option value="PAUSED">暂停</option>
+                        <option value="EXPIRED">已过期</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshActivityList()">
+                        <i class="bi bi-arrow-repeat"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>活动编号</th>
+                                <th>活动名称</th>
+                                <th>活动类型</th>
+                                <th>奖励类型</th>
+                                <th>奖励金额</th>
+                                <th>开始时间</th>
+                                <th>结束时间</th>
+                                <th>状态</th>
+                                <th>已使用</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-list-tbody">
+                            <!-- 动态加载数据 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="activity-list-empty" class="empty-state d-none">
+                    <i class="bi bi-trophy"></i>
+                    <h5>暂无激励活动</h5>
+                    <p>点击"新建激励活动"或"生成测试数据"开始</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面内容结束 -->
+    </div>
+    
+    <!-- 新建/编辑活动模态框 -->
+    <div class="modal fade" id="activityModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="activity-modal-title">新建激励活动</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="activity-form">
+                        <input type="hidden" id="activity-id">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">活动名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="activity-name" placeholder="请输入活动名称" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">活动类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="activity-type" required>
+                                        <option value="">请选择</option>
+                                        <option value="ORDER_BONUS">冲单奖励</option>
+                                        <option value="RUSH_HOUR_BONUS">高峰补贴</option>
+                                        <option value="NEW_DRIVER_BONUS">新人奖励</option>
+                                        <option value="ATTENDANCE_BONUS">出勤奖励</option>
+                                        <option value="AREA_BONUS">区域补贴</option>
+                                        <option value="OTHER">其他奖励</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">奖励类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="reward-type" required>
+                                        <option value="">请选择</option>
+                                        <option value="FIXED_AMOUNT">固定金额</option>
+                                        <option value="PER_ORDER">每单金额</option>
+                                        <option value="PERCENTAGE">按比例</option>
+                                        <option value="TIERED">阶梯奖励</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">奖励金额</label>
+                                    <input type="number" class="form-control" id="reward-amount" placeholder="请输入金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">开始时间 <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="start-time" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">结束时间 <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="end-time" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">最低订单数要求</label>
+                                    <input type="number" class="form-control" id="min-orders" placeholder="最低订单数">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">最高奖励金额（封顶）</label>
+                                    <input type="number" class="form-control" id="max-amount" placeholder="最高金额" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">预算金额</label>
+                                    <input type="number" class="form-control" id="budget-amount" placeholder="预算金额" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">排序</label>
+                                    <input type="number" class="form-control" id="sort-order" placeholder="排序数字" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">活动描述</label>
+                            <textarea class="form-control" id="activity-description" rows="3" placeholder="请输入活动描述"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveActivity()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveMenu('menu-incentive');
+            setPageTitle('激励奖励活动');
+            
+            // 加载数据
+            loadIncentiveData();
+            
+            // 设置默认时间
+            setDefaultTime();
+        });
+        
+        // 设置默认时间
+        function setDefaultTime() {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('start-time').value = formatDateTimeLocal(tomorrow);
+            document.getElementById('end-time').value = formatDateTimeLocal(nextMonth);
+        }
+        
+        // 格式化时间为 datetime-local 格式
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        
+        // 加载激励活动数据
+        function loadIncentiveData() {
+            // 加载统计数据
+            ajaxRequest('/api/incentive/stats').then(data => {
+                updateStats(data);
+            });
+            
+            // 加载活动列表
+            refreshActivityList();
+        }
+        
+        // 更新统计数据
+        function updateStats(data) {
+            document.getElementById('stat-total').textContent = data.total || 0;
+            document.getElementById('stat-active').textContent = data.active || 0;
+            document.getElementById('stat-pending').textContent = data.pending || 0;
+            document.getElementById('stat-expired').textContent = data.expired || 0;
+            document.getElementById('stat-drivers').textContent = data.totalBenefitedDrivers || 0;
+            document.getElementById('stat-orders').textContent = data.totalBenefitedOrders || 0;
+        }
+        
+        // 刷新活动列表
+        function refreshActivityList() {
+            ajaxRequest('/api/incentive/list').then(data => {
+                updateActivityList(data);
+            });
+        }
+        
+        // 更新活动列表
+        function updateActivityList(data) {
+            const tbody = document.getElementById('activity-list-tbody');
+            const emptyDiv = document.getElementById('activity-list-empty');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '';
+                emptyDiv.classList.remove('d-none');
+                return;
+            }
+            
+            emptyDiv.classList.add('d-none');
+            let html = '';
+            data.forEach(activity => {
+                const typeText = getActivityTypeText(activity.activityType);
+                const rewardText = getRewardTypeText(activity.rewardType);
+                const statusClass = getStatusClass(activity.status);
+                const statusText = getStatusText(activity.status);
+                
+                const rewardAmount = activity.fixedAmount || activity.perOrderAmount || 0;
+                
+                html += `
+                    <tr>
+                        <td><code>${activity.activityNo || '-'}</code></td>
+                        <td>${activity.activityName || '-'}</td>
+                        <td><span class="badge bg-info">${typeText}</span></td>
+                        <td>${rewardText}</td>
+                        <td>${formatCurrency(rewardAmount)}</td>
+                        <td>${formatDate(activity.startTime)}</td>
+                        <td>${formatDate(activity.endTime)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${formatCurrency(activity.usedAmount)}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                ${activity.status === 'DRAFT' || activity.status === 'PENDING' ? 
+                                    `<button class="btn btn-outline-success" onclick="startActivity(${activity.id})" title="启动">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>` : ''}
+                                ${activity.status === 'ACTIVE' ? 
+                                    `<button class="btn btn-outline-warning" onclick="pauseActivity(${activity.id})" title="暂停">
+                                        <i class="bi bi-pause-fill"></i>
+                                    </button>` : ''}
+                                ${activity.status === 'PAUSED' ? 
+                                    `<button class="btn btn-outline-success" onclick="resumeActivity(${activity.id})" title="恢复">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>` : ''}
+                                <button class="btn btn-outline-primary" onclick="editActivity(${activity.id})" title="编辑">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteActivity(${activity.id})" title="删除">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        // 获取活动类型文本
+        function getActivityTypeText(type) {
+            const map = {
+                'ORDER_BONUS': '冲单奖励',
+                'RUSH_HOUR_BONUS': '高峰补贴',
+                'NEW_DRIVER_BONUS': '新人奖励',
+                'ATTENDANCE_BONUS': '出勤奖励',
+                'AREA_BONUS': '区域补贴',
+                'OTHER': '其他奖励'
+            };
+            return map[type] || type;
+        }
+        
+        // 获取奖励类型文本
+        function getRewardTypeText(type) {
+            const map = {
+                'FIXED_AMOUNT': '固定金额',
+                'PER_ORDER': '每单金额',
+                'PERCENTAGE': '按比例',
+                'TIERED': '阶梯奖励'
+            };
+            return map[type] || type;
+        }
+        
+        // 获取状态样式
+        function getStatusClass(status) {
+            switch (status) {
+                case 'ACTIVE': return 'status-active';
+                case 'DRAFT': return 'status-pending';
+                case 'PENDING': return 'status-pending';
+                case 'PAUSED': return 'status-pending';
+                case 'EXPIRED': return 'status-completed';
+                case 'CANCELLED': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+        
+        // 获取状态文本
+        function getStatusText(status) {
+            const map = {
+                'DRAFT': '草稿',
+                'PENDING': '待发布',
+                'ACTIVE': '进行中',
+                'PAUSED': '暂停',
+                'EXPIRED': '已过期',
+                'CANCELLED': '已取消'
+            };
+            return map[status] || status;
+        }
+        
+        // 显示新建模态框
+        function showCreateModal() {
+            document.getElementById('activity-modal-title').textContent = '新建激励活动';
+            document.getElementById('activity-form').reset();
+            document.getElementById('activity-id').value = '';
+            setDefaultTime();
+            new bootstrap.Modal(document.getElementById('activityModal')).show();
+        }
+        
+        // 编辑活动
+        function editActivity(id) {
+            ajaxRequest('/api/incentive/detail/' + id).then(data => {
+                if (data) {
+                    document.getElementById('activity-modal-title').textContent = '编辑激励活动';
+                    document.getElementById('activity-id').value = data.id;
+                    document.getElementById('activity-name').value = data.activityName || '';
+                    document.getElementById('activity-type').value = data.activityType || '';
+                    document.getElementById('reward-type').value = data.rewardType || '';
+                    document.getElementById('reward-amount').value = data.fixedAmount || data.perOrderAmount || '';
+                    document.getElementById('min-orders').value = data.minOrders || '';
+                    document.getElementById('max-amount').value = data.maxAmount || '';
+                    document.getElementById('budget-amount').value = data.budgetAmount || '';
+                    document.getElementById('sort-order').value = data.sortOrder || 0;
+                    document.getElementById('activity-description').value = data.description || '';
+                    
+                    if (data.startTime) {
+                        document.getElementById('start-time').value = formatDateTimeLocal(new Date(data.startTime));
+                    }
+                    if (data.endTime) {
+                        document.getElementById('end-time').value = formatDateTimeLocal(new Date(data.endTime));
+                    }
+                    
+                    new bootstrap.Modal(document.getElementById('activityModal')).show();
+                }
+            });
+        }
+        
+        // 保存活动
+        function saveActivity() {
+            const id = document.getElementById('activity-id').value;
+            const data = {
+                activityName: document.getElementById('activity-name').value,
+                activityType: document.getElementById('activity-type').value,
+                rewardType: document.getElementById('reward-type').value,
+                fixedAmount: parseFloat(document.getElementById('reward-amount').value) || null,
+                perOrderAmount: parseFloat(document.getElementById('reward-amount').value) || null,
+                minOrders: parseInt(document.getElementById('min-orders').value) || null,
+                maxAmount: parseFloat(document.getElementById('max-amount').value) || null,
+                budgetAmount: parseFloat(document.getElementById('budget-amount').value) || null,
+                sortOrder: parseInt(document.getElementById('sort-order').value) || 0,
+                description: document.getElementById('activity-description').value,
+                startTime: document.getElementById('start-time').value ? new Date(document.getElementById('start-time').value).toISOString() : null,
+                endTime: document.getElementById('end-time').value ? new Date(document.getElementById('end-time').value).toISOString() : null
+            };
+            
+            const url = id ? '/api/incentive/update' : '/api/incentive/create';
+            if (id) {
+                data.id = parseInt(id);
+            }
+            
+            ajaxRequest(url, 'POST', data).then(result => {
+                if (result.success) {
+                    showToast('保存成功', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('activityModal')).hide();
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '保存失败', 'error');
+                }
+            });
+        }
+        
+        // 启动活动
+        function startActivity(id) {
+            if (!confirm('确认启动该活动？')) return;
+            
+            ajaxRequest('/api/incentive/start/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('启动成功', 'success');
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 暂停活动
+        function pauseActivity(id) {
+            if (!confirm('确认暂停该活动？')) return;
+            
+            ajaxRequest('/api/incentive/pause/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('暂停成功', 'success');
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 恢复活动
+        function resumeActivity(id) {
+            if (!confirm('确认恢复该活动？')) return;
+            
+            ajaxRequest('/api/incentive/resume/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('恢复成功', 'success');
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 删除活动
+        function deleteActivity(id) {
+            if (!confirm('确认删除该活动？')) return;
+            
+            ajaxRequest('/api/incentive/delete/' + id, 'POST').then(result => {
+                if (result.success) {
+                    showToast('删除成功', 'success');
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '删除失败', 'error');
+                }
+            });
+        }
+        
+        // 生成测试数据
+        function generateTestData() {
+            if (!confirm('确认生成测试激励活动数据？')) return;
+            
+            ajaxRequest('/api/incentive/generate/test?count=5', 'POST').then(result => {
+                if (result.success) {
+                    showToast('生成测试数据成功', 'success');
+                    loadIncentiveData();
+                } else {
+                    showToast(result.message || '生成失败', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

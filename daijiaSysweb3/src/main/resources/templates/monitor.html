@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <div th:fragment="content">
+        <!-- 页面内容开始 -->
+        
+        <!-- 监控选项卡 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="monitorTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="order-tab" data-bs-toggle="tab" data-bs-target="#order-panel" type="button">
+                            <i class="bi bi-receipt me-1"></i>订单状态监控
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="driver-tab" data-bs-toggle="tab" data-bs-target="#driver-panel" type="button">
+                            <i class="bi bi-people me-1"></i>司机分布
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="heatmap-tab" data-bs-toggle="tab" data-bs-target="#heatmap-panel" type="button">
+                            <i class="bi bi-map me-1"></i>服务区域热力图
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="monitorTabContent">
+                    
+                    <!-- 订单状态监控面板 -->
+                    <div class="tab-pane fade show active" id="order-panel" role="tabpanel">
+                        <!-- 订单状态统计卡片 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-warning" id="stat-pending">0</h5>
+                                        <p class="text-muted mb-0">待接单</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-info" id="stat-accepted">0</h5>
+                                        <p class="text-muted mb-0">已接单</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-primary" id="stat-inservice">0</h5>
+                                        <p class="text-muted mb-0">服务中</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-success" id="stat-total">0</h5>
+                                        <p class="text-muted mb-0">今日总计</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 进行中的订单列表 -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">进行中的订单</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshOrderMonitor()">
+                                <i class="bi bi-arrow-repeat"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>订单号</th>
+                                        <th>乘客</th>
+                                        <th>出发地</th>
+                                        <th>目的地</th>
+                                        <th>订单时间</th>
+                                        <th>状态</th>
+                                        <th>预估金额</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="active-orders-tbody">
+                                    <!-- 动态加载数据 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="active-orders-empty" class="empty-state d-none">
+                            <i class="bi bi-inbox"></i>
+                            <h5>暂无进行中的订单</h5>
+                            <p>所有订单已处理完成</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 司机分布面板 -->
+                    <div class="tab-pane fade" id="driver-panel" role="tabpanel">
+                        <!-- 司机状态统计卡片 -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-success" id="driver-online">0</h5>
+                                        <p class="text-muted mb-0">在线司机</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-primary" id="driver-inservice">0</h5>
+                                        <p class="text-muted mb-0">服务中</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-secondary" id="driver-total">0</h5>
+                                        <p class="text-muted mb-0">司机总数</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 地图展示区域 -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>司机实时位置分布</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="driver-map" style="height: 400px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <div class="text-center text-muted">
+                                                <i class="bi bi-map" style="font-size: 48px;"></i>
+                                                <p class="mt-2">地图区域（可集成真实地图API）</p>
+                                                <p class="small">模拟展示司机位置数据</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0"><i class="bi bi-list me-2"></i>在线司机列表</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="refreshDriverMonitor()">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </button>
+                                    </div>
+                                    <div class="card-body" style="height: 400px; overflow-y: auto;">
+                                        <div id="online-drivers-list">
+                                            <!-- 动态加载数据 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 服务区域热力图面板 -->
+                    <div class="tab-pane fade" id="heatmap-panel" role="tabpanel">
+                        <!-- 区域统计卡片 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-primary" id="area-total">0</h5>
+                                        <p class="text-muted mb-0">服务区域</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-success" id="area-active">0</h5>
+                                        <p class="text-muted mb-0">活跃区域</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-warning" id="area-avg-heat">0</h5>
+                                        <p class="text-muted mb-0">平均热度</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-info" id="area-today-orders">0</h5>
+                                        <p class="text-muted mb-0">今日订单</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 热力图展示 -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0"><i class="bi bi-fire me-2"></i>服务区域热力图</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="refreshHeatmap()">
+                                            <i class="bi bi-arrow-repeat"></i> 刷新数据
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="heatmap-container" style="height: 400px; background-color: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                            <div class="text-center text-muted">
+                                                <i class="bi bi-thermometer-sun" style="font-size: 48px;"></i>
+                                                <p class="mt-2">热力图区域（可集成真实地图API）</p>
+                                                <p class="small">模拟展示服务区域热度分布</p>
+                                            </div>
+                                        </div>
+                                        <!-- 图例 -->
+                                        <div class="mt-3 d-flex justify-content-center">
+                                            <div class="d-flex align-items-center me-4">
+                                                <span class="badge me-2" style="background-color: #00ff00;">低</span>
+                                                <span class="badge me-2" style="background-color: #ffff00;">中</span>
+                                                <span class="badge me-2" style="background-color: #ffa500;">高</span>
+                                                <span class="badge" style="background-color: #ff0000;">极高</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="bi bi-graph-down me-2"></i>热度排行榜</h6>
+                                    </div>
+                                    <div class="card-body" style="height: 400px; overflow-y: auto;">
+                                        <div id="heat-rank-list">
+                                            <!-- 动态加载数据 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面内容结束 -->
+    </div>
+    
+    <script th:inline="javascript">
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveMenu('menu-monitor');
+            setPageTitle('实时监控');
+            
+            // 初始加载数据
+            refreshOrderMonitor();
+            refreshDriverMonitor();
+            refreshHeatmap();
+        });
+        
+        // 刷新订单监控
+        function refreshOrderMonitor() {
+            // 加载订单统计
+            ajaxRequest('/api/order/stats').then(data => {
+                document.getElementById('stat-pending').textContent = data.pendingWaiting || 0;
+                document.getElementById('stat-accepted').textContent = data.accepted || 0;
+                document.getElementById('stat-inservice').textContent = data.inService || 0;
+                document.getElementById('stat-total').textContent = data.total || 0;
+            });
+            
+            // 加载进行中的订单
+            ajaxRequest('/api/order/active').then(data => {
+                updateActiveOrdersTable(data);
+            });
+        }
+        
+        // 更新进行中的订单表格
+        function updateActiveOrdersTable(data) {
+            const tbody = document.getElementById('active-orders-tbody');
+            const emptyDiv = document.getElementById('active-orders-empty');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '';
+                emptyDiv.classList.remove('d-none');
+                return;
+            }
+            
+            emptyDiv.classList.add('d-none');
+            let html = '';
+            data.forEach(order => {
+                const statusClass = getOrderStatusClass(order.status);
+                const statusText = getOrderStatusText(order.status);
+                html += `
+                    <tr>
+                        <td><code>${order.orderNo}</code></td>
+                        <td>乘客${order.passengerId || '-'}</td>
+                        <td>${order.startLocation || '-'}</td>
+                        <td>${order.endLocation || '-'}</td>
+                        <td>${formatDate(order.orderTime)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${formatCurrency(order.estimatedAmount)}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                ${order.status === 'PENDING_WAITING' ? 
+                                    `<button class="btn btn-outline-primary" onclick="acceptOrder(${order.id})">接单</button>` : ''}
+                                ${order.status === 'ACCEPTED' ? 
+                                    `<button class="btn btn-outline-success" onclick="startService(${order.id})">开始服务</button>` : ''}
+                                ${order.status === 'IN_SERVICE' ? 
+                                    `<button class="btn btn-outline-info" onclick="completeOrder(${order.id})">完成</button>` : ''}
+                                <button class="btn btn-outline-danger" onclick="cancelOrder(${order.id})">取消</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+        
+        // 刷新司机监控
+        function refreshDriverMonitor() {
+            // 加载司机统计
+            ajaxRequest('/api/driver/stats').then(data => {
+                document.getElementById('driver-online').textContent = data.onlineTotal || 0;
+                document.getElementById('driver-inservice').textContent = data.inService || 0;
+                document.getElementById('driver-total').textContent = data.total || 0;
+            });
+            
+            // 加载在线司机列表
+            ajaxRequest('/api/driver/online').then(data => {
+                updateOnlineDriversList(data);
+            });
+            
+            // 加载司机位置数据
+            ajaxRequest('/api/driver/locations').then(data => {
+                updateDriverLocations(data);
+            });
+        }
+        
+        // 更新在线司机列表
+        function updateOnlineDriversList(data) {
+            const container = document.getElementById('online-drivers-list');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted py-5">暂无在线司机</p>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(driver => {
+                const statusClass = driver.status === 'IN_SERVICE' ? 'status-inservice' : 'status-online';
+                const statusText = driver.status === 'IN_SERVICE' ? '服务中' : '空闲';
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2" style="width: 40px; height: 40px; font-size: 14px;">
+                                    ${(driver.name || 'D').charAt(0)}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">${driver.name || '未命名'}</h6>
+                                    <small class="text-muted">评分: ${driver.rating || '-'} | 今日: ${driver.todayOrders || 0}单</small>
+                                </div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        // 更新司机位置数据
+        function updateDriverLocations(data) {
+            // 这里可以将位置数据传递给地图组件
+            console.log('司机位置数据:', data);
+        }
+        
+        // 刷新热力图
+        function refreshHeatmap() {
+            // 加载热力图数据
+            ajaxRequest('/api/monitor/heatmap').then(data => {
+                updateHeatmapData(data);
+            });
+            
+            // 加载服务区域统计
+            ajaxRequest('/api/area/list').then(data => {
+                updateAreaStats(data);
+            });
+        }
+        
+        // 更新区域统计
+        function updateAreaStats(data) {
+            if (!data) return;
+            
+            const activeAreas = data.filter(area => area.status === 'ACTIVE');
+            document.getElementById('area-total').textContent = data.length;
+            document.getElementById('area-active').textContent = activeAreas.length;
+            
+            // 更新热度排行榜
+            const sortedAreas = [...data].sort((a, b) => (b.heatLevel || 0) - (a.heatLevel || 0));
+            updateHeatRankList(sortedAreas);
+        }
+        
+        // 更新热度排行榜
+        function updateHeatRankList(data) {
+            const container = document.getElementById('heat-rank-list');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted py-5">暂无数据</p>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach((area, index) => {
+                const heatLevel = area.heatLevel || 0;
+                const heatColor = heatLevel >= 80 ? 'text-danger' : 
+                                   heatLevel >= 50 ? 'text-warning' : 
+                                   heatLevel >= 20 ? 'text-info' : 'text-success';
+                html += `
+                    <div class="d-flex align-items-center py-2 border-bottom">
+                        <span class="badge bg-secondary me-3" style="width: 24px;">${index + 1}</span>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">${area.areaName || '未命名区域'}</h6>
+                            <small class="text-muted">司机: ${area.onlineDrivers || 0} | 订单: ${area.currentOrders || 0}</small>
+                        </div>
+                        <span class="${heatColor} fw-bold">${heatLevel}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        // 更新热力图数据
+        function updateHeatmapData(data) {
+            console.log('热力图数据:', data);
+            // 这里可以将数据传递给热力图组件
+            
+            // 更新平均热度
+            if (data && data.heatMapData) {
+                const totalHeat = data.heatMapData.reduce((sum, item) => sum + (item.heatLevel || 0), 0);
+                const avgHeat = data.heatMapData.length > 0 ? Math.round(totalHeat / data.heatMapData.length) : 0;
+                document.getElementById('area-avg-heat').textContent = avgHeat;
+            }
+        }
+        
+        // 订单操作函数
+        function acceptOrder(orderId) {
+            if (!confirm('确认接单？')) return;
+            
+            // 模拟司机ID，实际应该从当前登录用户获取或选择
+            const driverId = 1;
+            
+            ajaxRequest('/api/order/accept', 'POST', {
+                orderId: orderId,
+                driverId: driverId
+            }).then(data => {
+                if (data.success) {
+                    showToast('接单成功', 'success');
+                    refreshOrderMonitor();
+                } else {
+                    showToast(data.message || '接单失败', 'error');
+                }
+            });
+        }
+        
+        function startService(orderId) {
+            if (!confirm('确认开始服务？')) return;
+            
+            ajaxRequest('/api/order/start', 'POST', { orderId: orderId })
+            .then(data => {
+                if (data.success) {
+                    showToast('开始服务成功', 'success');
+                    refreshOrderMonitor();
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        function completeOrder(orderId) {
+            const amount = prompt('请输入实际金额:', '');
+            if (amount === null) return;
+            
+            ajaxRequest('/api/order/complete', 'POST', {
+                orderId: orderId,
+                actualAmount: amount || 0
+            }).then(data => {
+                if (data.success) {
+                    showToast('完成订单成功', 'success');
+                    refreshOrderMonitor();
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        function cancelOrder(orderId) {
+            const reason = prompt('请输入取消原因:', '');
+            if (reason === null) return;
+            
+            ajaxRequest('/api/order/cancel', 'POST', {
+                orderId: orderId,
+                cancelReason: reason || '用户取消'
+            }).then(data => {
+                if (data.success) {
+                    showToast('取消订单成功', 'success');
+                    refreshOrderMonitor();
+                } else {
+                    showToast(data.message || '操作失败', 'error');
+                }
+            });
+        }
+        
+        // 获取订单状态样式
+        function getOrderStatusClass(status) {
+            switch (status) {
+                case 'PENDING_WAITING': return 'status-pending';
+                case 'ACCEPTED': return 'status-pending';
+                case 'IN_SERVICE': return 'status-inservice';
+                case 'COMPLETED': return 'status-active';
+                case 'CANCELLED': return 'status-cancelled';
+                default: return 'status-pending';
+            }
+        }
+        
+        // 获取订单状态文本
+        function getOrderStatusText(status) {
+            switch (status) {
+                case 'PENDING_WAITING': return '待接单';
+                case 'ACCEPTED': return '已接单';
+                case 'PICKING_UP': return '接驾中';
+                case 'IN_SERVICE': return '服务中';
+                case 'COMPLETED': return '已完成';
+                case 'CANCELLED': return '已取消';
+                default: return status;
+            }
+        }
+    </script>
+</body>
+</html>

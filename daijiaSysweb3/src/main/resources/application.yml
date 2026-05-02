@@ -1,0 +1,60 @@
+# 代驾后台管理系统配置文件
+
+# 服务器配置
+server:
+  port: 8080
+
+# Spring 配置
+spring:
+  # 应用名称
+  application:
+    name: daijia-sysweb
+
+  # 数据源配置 - H2内存数据库
+  datasource:
+    url: jdbc:h2:mem:daijiadb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # H2控制台配置
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 启动时创建表，关闭时删除
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # Thymeleaf配置
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+    encoding: UTF-8
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# 日志配置
+logging:
+  level:
+    com.daijia: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# 系统自定义配置
+system:
+  # 运营监控刷新间隔(秒)
+  monitor.refresh.interval: 30
+  # 营销活动默认有效期(天)
+  promotion.default.days: 30
