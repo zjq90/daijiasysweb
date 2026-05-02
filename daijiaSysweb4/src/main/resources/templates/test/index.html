@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试功能 - 代驾服务后台管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar .nav-link i {
+            width: 1.5rem;
+        }
+        .stat-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .content-wrapper {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: white;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .test-card {
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        .test-card:hover {
+            border-left-color: #764ba2;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        .test-result {
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .test-result.success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+        .test-result.error {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+        .test-result.info {
+            background-color: #cff4fc;
+            color: #055160;
+            border: 1px solid #b6effb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4 text-white text-center">
+                    <i class="bi bi-car-front-fill fs-1"></i>
+                    <h5 class="mt-2 fw-bold">代驾管理系统</h5>
+                    <small class="opacity-75">DAIJIA ADMIN</small>
+                </div>
+                <nav class="nav flex-column px-3">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-speedometer2"></i> 首页概览
+                    </a>
+                    <a class="nav-link" href="/credit">
+                        <i class="bi bi-star-half"></i> 服务信用管理
+                    </a>
+                    <a class="nav-link" href="/credit/user-evaluations">
+                        <i class="bi bi-people-fill"></i> 用户评价记录
+                    </a>
+                    <a class="nav-link" href="/credit/driver-evaluations">
+                        <i class="bi bi-person-badge-fill"></i> 司机评价记录
+                    </a>
+                    <a class="nav-link" href="/pricing">
+                        <i class="bi bi-calculator-fill"></i> 系统计费设置
+                    </a>
+                    <a class="nav-link" href="/payment">
+                        <i class="bi bi-credit-card-fill"></i> 支付方式配置
+                    </a>
+                    <a class="nav-link" href="/orders">
+                        <i class="bi bi-list-ul"></i> 订单管理
+                    </a>
+                    <a class="nav-link active" href="/test">
+                        <i class="bi bi-play-circle-fill"></i> 测试功能
+                    </a>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10 content-wrapper">
+                <!-- 页面头部 -->
+                <div class="page-header p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">
+                                <i class="bi bi-play-circle-fill text-success"></i> 测试功能
+                            </h3>
+                            <small class="text-muted">测试系统各模块功能，验证业务逻辑</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试模块 -->
+                <div class="px-4 pb-4">
+                    <div class="row g-4">
+                        <!-- 计费测试 -->
+                        <div class="col-lg-6">
+                            <div class="stat-card bg-white p-4 test-card">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-calculator-fill text-primary"></i> 计费测试
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">行驶距离(公里)</label>
+                                        <input type="number" class="form-control" id="testDistance" step="0.1" min="0" value="10.5">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">等待时间(分钟)</label>
+                                        <input type="number" class="form-control" id="testWaitTime" min="0" value="15">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">当前时间</label>
+                                        <input type="time" class="form-control" id="testTime" value="20:00">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary w-100" onclick="testPricing()">
+                                    <i class="bi bi-play-fill"></i> 执行计费测试
+                                </button>
+                                <div id="pricingResult" class="test-result d-none"></div>
+                            </div>
+                        </div>
+
+                        <!-- 支付模拟测试 -->
+                        <div class="col-lg-6">
+                            <div class="stat-card bg-white p-4 test-card">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-credit-card-fill text-success"></i> 支付模拟测试
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">支付方式</label>
+                                        <select class="form-select" id="testPaymentType">
+                                            <option value="WECHAT">微信支付</option>
+                                            <option value="ALIPAY">支付宝</option>
+                                            <option value="UNIONPAY">银联支付</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">支付模式</label>
+                                        <select class="form-select" id="testPayMode">
+                                            <option value="PREPAY">预付模式</option>
+                                            <option value="POSTPAY">后付模式</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small fw-bold">支付金额</label>
+                                        <input type="number" class="form-control" id="testAmount" step="0.01" min="0" value="68.00">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-success w-100" onclick="testPayment()">
+                                    <i class="bi bi-play-fill"></i> 执行支付模拟
+                                </button>
+                                <div id="paymentResult" class="test-result d-none"></div>
+                            </div>
+                        </div>
+
+                        <!-- API测试 -->
+                        <div class="col-lg-6">
+                            <div class="stat-card bg-white p-4 test-card">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-code-slash text-info"></i> API测试
+                                </h6>
+                                <div class="list-group small">
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="testApi('orders')">
+                                        <div>
+                                            <i class="bi bi-list-ul text-primary"></i>
+                                            <strong class="ms-2">获取订单列表</strong>
+                                        </div>
+                                        <span class="text-muted">GET /api/orders</span>
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="testApi('userEvaluations')">
+                                        <div>
+                                            <i class="bi bi-people-fill text-primary"></i>
+                                            <strong class="ms-2">获取用户评价</strong>
+                                        </div>
+                                        <span class="text-muted">GET /api/user-evaluations</span>
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="testApi('driverEvaluations')">
+                                        <div>
+                                            <i class="bi bi-person-badge-fill text-secondary"></i>
+                                            <strong class="ms-2">获取司机评价</strong>
+                                        </div>
+                                        <span class="text-muted">GET /api/driver-evaluations</span>
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="testApi('pricingConfigs')">
+                                        <div>
+                                            <i class="bi bi-calculator-fill text-primary"></i>
+                                            <strong class="ms-2">获取计费配置</strong>
+                                        </div>
+                                        <span class="text-muted">GET /api/pricing-configs</span>
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="testApi('paymentConfigs')">
+                                        <div>
+                                            <i class="bi bi-credit-card-fill text-success"></i>
+                                            <strong class="ms-2">获取支付配置</strong>
+                                        </div>
+                                        <span class="text-muted">GET /api/payment-configs</span>
+                                    </button>
+                                </div>
+                                <div id="apiResult" class="test-result d-none mt-3"></div>
+                            </div>
+                        </div>
+
+                        <!-- 数据库测试 -->
+                        <div class="col-lg-6">
+                            <div class="stat-card bg-white p-4 test-card">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-database-fill text-warning"></i> 数据库连接测试
+                                </h6>
+                                <div class="alert alert-info" role="alert">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                    <strong>H2数据库控制台：</strong>
+                                    <a href="/h2-console" target="_blank" class="alert-link">点击打开</a>
+                                    <br>
+                                    <small class="text-muted">
+                                        数据库URL: jdbc:h2:file:./data/daijia<br>
+                                        用户名: sa<br>
+                                        密码: (空)
+                                    </small>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label small fw-bold">测试SQL查询</label>
+                                        <select class="form-select" id="testSql">
+                                            <option value="users">查询用户表</option>
+                                            <option value="drivers">查询司机表</option>
+                                            <option value="orders">查询订单表</option>
+                                            <option value="userEvaluations">查询用户评价表</option>
+                                            <option value="driverEvaluations">查询司机评价表</option>
+                                            <option value="pricingConfigs">查询计费配置表</option>
+                                            <option value="paymentConfigs">查询支付配置表</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-warning" onclick="testDatabase()">
+                                        <i class="bi bi-play-fill"></i> 执行数据库测试
+                                    </button>
+                                    <a href="/h2-console" target="_blank" class="btn btn-outline-warning">
+                                        <i class="bi bi-box-arrow-up-right"></i> 打开H2控制台
+                                    </a>
+                                </div>
+                                <div id="dbResult" class="test-result d-none"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试说明 -->
+                <div class="px-4 pb-4">
+                    <div class="stat-card bg-white p-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-info-circle-fill text-info"></i> 测试说明
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-primary mb-2">
+                                        <i class="bi bi-calculator-fill"></i> 计费测试
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1">输入行驶距离和等待时间</li>
+                                        <li class="mb-1">选择当前时间（判断是否夜间加价）</li>
+                                        <li class="mb-1">系统会使用默认计费配置计算费用</li>
+                                        <li class="mb-1">计算公式：起步价 + 里程费 + 等待费 + 夜间加价</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-success mb-2">
+                                        <i class="bi bi-credit-card-fill"></i> 支付模拟
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1">选择支付方式（微信/支付宝/银联）</li>
+                                        <li class="mb-1">选择支付模式（预付/后付）</li>
+                                        <li class="mb-1">输入支付金额</li>
+                                        <li class="mb-1">系统会模拟支付流程并返回结果</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-info mb-2">
+                                        <i class="bi bi-code-slash"></i> API测试
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1">测试各模块的RESTful API接口</li>
+                                        <li class="mb-1">返回JSON格式的响应数据</li>
+                                        <li class="mb-1">可用于前端开发调试</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-warning mb-2">
+                                        <i class="bi bi-database-fill"></i> 数据库测试
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1">测试数据库连接和数据查询</li>
+                                        <li class="mb-1">H2控制台可直接查看和编辑数据</li>
+                                        <li class="mb-1">测试数据已自动初始化</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 显示结果
+        function showResult(elementId, data, type) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.classList.remove('d-none');
+            resultDiv.className = 'test-result ' + type;
+            
+            if (typeof data === 'object') {
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } else {
+                resultDiv.textContent = data;
+            }
+        }
+
+        // 计费测试
+        function testPricing() {
+            const distance = document.getElementById('testDistance').value;
+            const waitTime = document.getElementById('testWaitTime').value;
+            const time = document.getElementById('testTime').value;
+            
+            fetch('/api/pricing-configs/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    distance: parseFloat(distance),
+                    waitTime: parseInt(waitTime),
+                    currentTime: time
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showResult('pricingResult', data, 'success');
+            })
+            .catch(error => {
+                showResult('pricingResult', '错误: ' + error.message, 'error');
+            });
+        }
+
+        // 支付测试
+        function testPayment() {
+            const paymentType = document.getElementById('testPaymentType').value;
+            const payMode = document.getElementById('testPayMode').value;
+            const amount = document.getElementById('testAmount').value;
+            
+            fetch('/api/payment-configs/simulate-payment?paymentType=' + paymentType + 
+                  '&payMode=' + payMode + '&amount=' + amount, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('paymentResult', data, 'success');
+                } else {
+                    showResult('paymentResult', data, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('paymentResult', '错误: ' + error.message, 'error');
+            });
+        }
+
+        // API测试
+        function testApi(apiType) {
+            let url = '';
+            switch(apiType) {
+                case 'orders':
+                    url = '/api/orders';
+                    break;
+                case 'userEvaluations':
+                    url = '/api/user-evaluations';
+                    break;
+                case 'driverEvaluations':
+                    url = '/api/driver-evaluations';
+                    break;
+                case 'pricingConfigs':
+                    url = '/api/pricing-configs';
+                    break;
+                case 'paymentConfigs':
+                    url = '/api/payment-configs';
+                    break;
+            }
+            
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                showResult('apiResult', {
+                    url: url,
+                    status: 'success',
+                    data: data
+                }, 'success');
+            })
+            .catch(error => {
+                showResult('apiResult', '错误: ' + error.message, 'error');
+            });
+        }
+
+        // 数据库测试
+        function testDatabase() {
+            const sqlType = document.getElementById('testSql').value;
+            let url = '';
+            let tableName = '';
+            
+            switch(sqlType) {
+                case 'users':
+                    url = '/api/orders';
+                    tableName = 'users (通过订单关联)';
+                    break;
+                case 'drivers':
+                    url = '/api/orders';
+                    tableName = 'drivers (通过订单关联)';
+                    break;
+                case 'orders':
+                    url = '/api/orders';
+                    tableName = 'orders';
+                    break;
+                case 'userEvaluations':
+                    url = '/api/user-evaluations';
+                    tableName = 'user_evaluations';
+                    break;
+                case 'driverEvaluations':
+                    url = '/api/driver-evaluations';
+                    tableName = 'driver_evaluations';
+                    break;
+                case 'pricingConfigs':
+                    url = '/api/pricing-configs';
+                    tableName = 'pricing_configs';
+                    break;
+                case 'paymentConfigs':
+                    url = '/api/payment-configs';
+                    tableName = 'payment_configs';
+                    break;
+            }
+            
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                showResult('dbResult', {
+                    table: tableName,
+                    apiUrl: url,
+                    recordCount: Array.isArray(data) ? data.length : 1,
+                    data: data
+                }, 'success');
+            })
+            .catch(error => {
+                showResult('dbResult', '错误: ' + error.message, 'error');
+            });
+        }
+    </script>
+</body>
+</html>

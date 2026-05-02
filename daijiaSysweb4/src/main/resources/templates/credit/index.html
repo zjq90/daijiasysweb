@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务信用管理 - 代驾服务后台管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar .nav-link i {
+            width: 1.5rem;
+        }
+        .stat-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .content-wrapper {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: white;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .module-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .module-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        .module-card .card-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4 text-white text-center">
+                    <i class="bi bi-car-front-fill fs-1"></i>
+                    <h5 class="mt-2 fw-bold">代驾管理系统</h5>
+                    <small class="opacity-75">DAIJIA ADMIN</small>
+                </div>
+                <nav class="nav flex-column px-3">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-speedometer2"></i> 首页概览
+                    </a>
+                    <a class="nav-link active" href="/credit">
+                        <i class="bi bi-star-half"></i> 服务信用管理
+                    </a>
+                    <a class="nav-link" href="/credit/user-evaluations">
+                        <i class="bi bi-people-fill"></i> 用户评价记录
+                    </a>
+                    <a class="nav-link" href="/credit/driver-evaluations">
+                        <i class="bi bi-person-badge-fill"></i> 司机评价记录
+                    </a>
+                    <a class="nav-link" href="/pricing">
+                        <i class="bi bi-calculator-fill"></i> 系统计费设置
+                    </a>
+                    <a class="nav-link" href="/payment">
+                        <i class="bi bi-credit-card-fill"></i> 支付方式配置
+                    </a>
+                    <a class="nav-link" href="/orders">
+                        <i class="bi bi-list-ul"></i> 订单管理
+                    </a>
+                    <a class="nav-link" href="/test">
+                        <i class="bi bi-play-circle-fill"></i> 测试功能
+                    </a>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10 content-wrapper">
+                <!-- 页面头部 -->
+                <div class="page-header p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">
+                                <i class="bi bi-star-half text-warning"></i> 服务信用管理
+                            </h3>
+                            <small class="text-muted">管理用户和司机的评价记录，查看信用评分</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="px-4 mb-4">
+                    <div class="row g-4">
+                        <!-- 用户评价总数 -->
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon bg-primary bg-opacity-10 text-primary me-3">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${totalUserEvaluations}">0</h4>
+                                        <small class="text-muted">用户评价总数</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 司机评价总数 -->
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon bg-secondary bg-opacity-10 text-secondary me-3">
+                                        <i class="bi bi-person-badge-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${totalDriverEvaluations}">0</h4>
+                                        <small class="text-muted">司机评价总数</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 平均用户评分 -->
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon bg-warning bg-opacity-10 text-warning me-3">
+                                        <i class="bi bi-star-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${avgUserRating}">0.0</h4>
+                                        <small class="text-muted">用户平均评分</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 平均司机评分 -->
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon bg-success bg-opacity-10 text-success me-3">
+                                        <i class="bi bi-star-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${avgDriverRating}">0.0</h4>
+                                        <small class="text-muted">司机平均评分</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能模块入口 -->
+                <div class="px-4 mb-4">
+                    <div class="row g-4">
+                        <!-- 用户评价记录 -->
+                        <div class="col-md-6">
+                            <div class="module-card bg-white p-5" onclick="window.location.href='/credit/user-evaluations'">
+                                <div class="card-icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <h5 class="fw-bold mb-2">用户评价记录</h5>
+                                <p class="text-muted mb-3">查看和管理用户对司机的评价记录，包括总体评分、驾驶技术、服务态度、车辆整洁等维度</p>
+                                <div class="d-flex align-items-center text-primary">
+                                    <span class="fw-bold">进入管理</span>
+                                    <i class="bi bi-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 司机评价记录 -->
+                        <div class="col-md-6">
+                            <div class="module-card bg-white p-5" onclick="window.location.href='/credit/driver-evaluations'">
+                                <div class="card-icon bg-secondary bg-opacity-10 text-secondary">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                </div>
+                                <h5 class="fw-bold mb-2">司机评价记录</h5>
+                                <p class="text-muted mb-3">查看和管理司机对用户的评价记录，包括是否醉酒、是否更改目的地、是否有异常行为等特殊标记</p>
+                                <div class="d-flex align-items-center text-secondary">
+                                    <span class="fw-bold">进入管理</span>
+                                    <i class="bi bi-arrow-right ms-2"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 说明卡片 -->
+                <div class="px-4 pb-4">
+                    <div class="stat-card bg-white p-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-info-circle-fill text-info"></i> 信用管理说明
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-primary mb-2">
+                                        <i class="bi bi-people-fill"></i> 用户评价司机
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1"><strong>总体评分</strong>：1-5星，影响司机平均评分</li>
+                                        <li class="mb-1"><strong>驾驶技术</strong>：评价司机驾驶技能</li>
+                                        <li class="mb-1"><strong>服务态度</strong>：评价司机服务态度</li>
+                                        <li class="mb-1"><strong>车辆整洁</strong>：评价车辆清洁程度</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <h6 class="fw-bold text-secondary mb-2">
+                                        <i class="bi bi-person-badge-fill"></i> 司机评价用户
+                                    </h6>
+                                    <ul class="text-muted small mb-0" style="padding-left: 1.2rem;">
+                                        <li class="mb-1"><strong>总体评分</strong>：1-5星，影响用户平均评分</li>
+                                        <li class="mb-1"><strong>是否醉酒</strong>：标记用户是否醉酒</li>
+                                        <li class="mb-1"><strong>更改目的地</strong>：标记是否中途更改目的地</li>
+                                        <li class="mb-1"><strong>异常行为</strong>：标记是否有异常行为</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-top mt-3 pt-3">
+                            <h6 class="fw-bold text-warning mb-2">
+                                <i class="bi bi-exclamation-triangle-fill"></i> 派单优先级与服务权限规则
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>评分范围</th>
+                                            <th>派单优先级</th>
+                                            <th>服务权限</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="badge bg-success">≥ 4.8分</span></td>
+                                            <td><span class="badge bg-primary">优先级 10</span>（最高）</td>
+                                            <td><span class="badge bg-success">全部服务</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-info">4.5 - 4.7分</span></td>
+                                            <td><span class="badge bg-primary">优先级 7</span></td>
+                                            <td><span class="badge bg-success">全部服务</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-warning">4.0 - 4.4分</span></td>
+                                            <td><span class="badge bg-warning">优先级 5</span></td>
+                                            <td><span class="badge bg-warning">限制服务</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-danger">＜ 4.0分</span></td>
+                                            <td><span class="badge bg-danger">优先级 2</span>（最低）</td>
+                                            <td><span class="badge bg-danger">暂停服务</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

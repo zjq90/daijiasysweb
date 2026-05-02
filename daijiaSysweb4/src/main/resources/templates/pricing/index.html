@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统计费设置 - 代驾服务后台管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar .nav-link i {
+            width: 1.5rem;
+        }
+        .stat-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .content-wrapper {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: white;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .table-responsive {
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .table thead th {
+            border: none;
+            font-weight: 600;
+        }
+        .default-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4 text-white text-center">
+                    <i class="bi bi-car-front-fill fs-1"></i>
+                    <h5 class="mt-2 fw-bold">代驾管理系统</h5>
+                    <small class="opacity-75">DAIJIA ADMIN</small>
+                </div>
+                <nav class="nav flex-column px-3">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-speedometer2"></i> 首页概览
+                    </a>
+                    <a class="nav-link" href="/credit">
+                        <i class="bi bi-star-half"></i> 服务信用管理
+                    </a>
+                    <a class="nav-link" href="/credit/user-evaluations">
+                        <i class="bi bi-people-fill"></i> 用户评价记录
+                    </a>
+                    <a class="nav-link" href="/credit/driver-evaluations">
+                        <i class="bi bi-person-badge-fill"></i> 司机评价记录
+                    </a>
+                    <a class="nav-link active" href="/pricing">
+                        <i class="bi bi-calculator-fill"></i> 系统计费设置
+                    </a>
+                    <a class="nav-link" href="/payment">
+                        <i class="bi bi-credit-card-fill"></i> 支付方式配置
+                    </a>
+                    <a class="nav-link" href="/orders">
+                        <i class="bi bi-list-ul"></i> 订单管理
+                    </a>
+                    <a class="nav-link" href="/test">
+                        <i class="bi bi-play-circle-fill"></i> 测试功能
+                    </a>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10 content-wrapper">
+                <!-- 页面头部 -->
+                <div class="page-header p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">
+                                <i class="bi bi-calculator-fill text-primary"></i> 系统计费设置
+                            </h3>
+                            <small class="text-muted">配置起步价、里程费、等待费、夜间加价等计费规则</small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+                                <i class="bi bi-plus-circle"></i> 新增配置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 计费说明卡片 -->
+                <div class="px-4 mb-4">
+                    <div class="stat-card bg-white p-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-info-circle-fill text-info"></i> 计费规则说明
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light text-center">
+                                    <i class="bi bi-flag-fill text-primary fs-2 mb-2"></i>
+                                    <h6 class="fw-bold">起步价</h6>
+                                    <p class="text-muted small mb-0">包含起步距离内的费用</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light text-center">
+                                    <i class="bi bi-road text-success fs-2 mb-2"></i>
+                                    <h6 class="fw-bold">里程费</h6>
+                                    <p class="text-muted small mb-0">超出起步距离后，每公里费用</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light text-center">
+                                    <i class="bi bi-hourglass-split text-warning fs-2 mb-2"></i>
+                                    <h6 class="fw-bold">等待费</h6>
+                                    <p class="text-muted small mb-0">超出免费等待时间后，每分钟费用</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="border rounded p-3 bg-light text-center">
+                                    <i class="bi bi-moon-fill text-info fs-2 mb-2"></i>
+                                    <h6 class="fw-bold">夜间加价</h6>
+                                    <p class="text-muted small mb-0">夜间时段每公里额外加价</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-primary mb-0" role="alert">
+                            <i class="bi bi-lightbulb-fill"></i> 
+                            <strong>计算公式：</strong> 
+                            总费用 = 起步价 + MAX(行驶距离 - 起步距离, 0) × 里程费 + MAX(等待时间 - 免费等待时间, 0) × 等待费 + 夜间加价（如适用）
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 计费配置列表 -->
+                <div class="px-4 pb-4">
+                    <div class="stat-card bg-white p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>配置名称</th>
+                                        <th>起步价</th>
+                                        <th>起步距离</th>
+                                        <th>里程费/公里</th>
+                                        <th>等待费/分钟</th>
+                                        <th>状态</th>
+                                        <th>是否默认</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${configs.isEmpty()}">
+                                        <td colspan="8" class="text-center text-muted py-4">暂无计费配置</td>
+                                    </tr>
+                                    <tr th:each="config : ${configs}">
+                                        <td>
+                                            <span class="fw-bold" th:text="${config.configName}">默认配置</span>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-danger" th:text="'¥' + ${config.startPrice}">¥15.00</span>
+                                        </td>
+                                        <td th:text="${config.startDistance} + '公里'">3公里</td>
+                                        <td th:text="'¥' + ${config.perKmPrice} + '/公里'">¥3.50/公里</td>
+                                        <td th:text="'¥' + ${config.perMinuteWaitPrice} + '/分钟'">¥0.50/分钟</td>
+                                        <td>
+                                            <span th:if="${config.enabled}" class="badge bg-success">启用</span>
+                                            <span th:unless="${config.enabled}" class="badge bg-secondary">禁用</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${config.isDefault}" class="badge default-badge">默认</span>
+                                            <span th:unless="${config.isDefault}" class="badge bg-light text-secondary">-</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" th:data-bs-target="'#detailModal' + ${config.id}">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" th:data-bs-target="'#editModal' + ${config.id}">
+                                                <i class="bi bi-pencil"></i> 编辑
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${config.id}">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增配置模态框 -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-plus-circle text-primary"></i> 新增计费配置
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/pricing" method="post">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">配置名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="configName" required placeholder="例如：默认配置、夜间配置">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">是否启用</label>
+                                <select class="form-select" name="enabled">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">起步价 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="startPrice" step="0.01" min="0" required placeholder="例如：15.00">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">起步距离(公里) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="startDistance" step="0.1" min="0" required placeholder="例如：3.0">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">里程费(元/公里) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="perKmPrice" step="0.01" min="0" required placeholder="例如：3.50">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">免费等待时间(分钟)</label>
+                                <input type="number" class="form-control" name="freeWaitTime" min="0" value="10" placeholder="例如：10">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">等待费(元/分钟) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="perMinuteWaitPrice" step="0.01" min="0" required placeholder="例如：0.50">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">夜间加价(元/公里)</label>
+                                <input type="number" class="form-control" name="nightSurcharge" step="0.01" min="0" value="0" placeholder="例如：2.00">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">夜间开始时间</label>
+                                <input type="time" class="form-control" name="nightStartTime" value="22:00">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">夜间结束时间</label>
+                                <input type="time" class="form-control" name="nightEndTime" value="06:00">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">备注</label>
+                            <textarea class="form-control" name="remark" rows="2" placeholder="配置说明..."></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="isDefault" id="isDefaultAdd" value="true">
+                            <label class="form-check-label" for="isDefaultAdd">
+                                <span class="fw-bold">设为默认配置</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 确认保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 动态生成模态框 -->
+    <th:block th:each="config : ${configs}">
+        <!-- 详情模态框 -->
+        <div class="modal fade" th:id="'detailModal' + ${config.id}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-eye text-info"></i> 计费配置详情
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">配置名称</label>
+                                <p class="fw-bold" th:text="${config.configName}">默认配置</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">状态</label>
+                                <p>
+                                    <span th:if="${config.enabled}" class="badge bg-success">启用</span>
+                                    <span th:unless="${config.enabled}" class="badge bg-secondary">禁用</span>
+                                    <span th:if="${config.isDefault}" class="badge default-badge ms-2">默认</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="border-top border-bottom py-3 mb-3">
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <h6 class="fw-bold text-primary">起步价</h6>
+                                    <p class="h3 fw-bold" th:text="'¥' + ${config.startPrice}">¥15.00</p>
+                                    <small class="text-muted" th:text="'包含' + ${config.startDistance} + '公里'">包含3.0公里</small>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <h6 class="fw-bold text-success">里程费</h6>
+                                    <p class="h3 fw-bold" th:text="'¥' + ${config.perKmPrice} + '/公里'">¥3.50/公里</p>
+                                    <small class="text-muted">超出起步距离后</small>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <h6 class="fw-bold text-warning">等待费</h6>
+                                    <p class="h3 fw-bold" th:text="'¥' + ${config.perMinuteWaitPrice} + '/分钟'">¥0.50/分钟</p>
+                                    <small class="text-muted" th:text="'免费等待' + ${config.freeWaitTime} + '分钟'">免费等待10分钟</small>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <h6 class="fw-bold text-info">夜间加价</h6>
+                                    <p class="h3 fw-bold" th:text="'¥' + ${config.nightSurcharge} + '/公里'">¥2.00/公里</p>
+                                    <small class="text-muted" th:text="${config.nightStartTime} + ' - ' + ${config.nightEndTime}">22:00 - 06:00</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-muted small">备注</label>
+                            <p class="text-muted" th:text="${config.remark != null ? config.remark : '暂无备注'}">备注内容...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑模态框 -->
+        <div class="modal fade" th:id="'editModal' + ${config.id}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-pencil text-warning"></i> 编辑计费配置
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="'/pricing/' + ${config.id}" method="post">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">配置名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="configName" th:value="${config.configName}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">是否启用</label>
+                                    <select class="form-select" name="enabled">
+                                        <option value="true" th:selected="${config.enabled}">是</option>
+                                        <option value="false" th:selected="${!config.enabled}">否</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">起步价</label>
+                                    <input type="number" class="form-control" name="startPrice" step="0.01" min="0" th:value="${config.startPrice}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">起步距离(公里)</label>
+                                    <input type="number" class="form-control" name="startDistance" step="0.1" min="0" th:value="${config.startDistance}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">里程费(元/公里)</label>
+                                    <input type="number" class="form-control" name="perKmPrice" step="0.01" min="0" th:value="${config.perKmPrice}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">免费等待时间(分钟)</label>
+                                    <input type="number" class="form-control" name="freeWaitTime" min="0" th:value="${config.freeWaitTime}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">等待费(元/分钟)</label>
+                                    <input type="number" class="form-control" name="perMinuteWaitPrice" step="0.01" min="0" th:value="${config.perMinuteWaitPrice}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">夜间加价(元/公里)</label>
+                                    <input type="number" class="form-control" name="nightSurcharge" step="0.01" min="0" th:value="${config.nightSurcharge}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">夜间开始时间</label>
+                                    <input type="time" class="form-control" name="nightStartTime" th:value="${config.nightStartTime}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold">夜间结束时间</label>
+                                    <input type="time" class="form-control" name="nightEndTime" th:value="${config.nightEndTime}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">备注</label>
+                                <textarea class="form-control" name="remark" rows="2" th:text="${config.remark}"></textarea>
+                            </div>
+                            <div class="form-check" th:if="${!config.isDefault}">
+                                <input class="form-check-input" type="checkbox" name="isDefault" th:id="'isDefault' + ${config.id}" value="true">
+                                <label class="form-check-label" th:for="'isDefault' + ${config.id}">
+                                    <span class="fw-bold">设为默认配置</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> 确认保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 删除确认模态框 -->
+        <div class="modal fade" th:id="'deleteModal' + ${config.id}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-danger">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 确认删除
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">确定要删除该计费配置吗？</p>
+                        <p class="text-muted small">配置名称：<span th:text="${config.configName}">默认配置</span></p>
+                        <p class="text-danger small"><i class="bi bi-info-circle"></i> 此操作不可恢复，请谨慎操作！</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <form th:action="'/pricing/' + ${config.id} + '/delete'" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> 确认删除
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

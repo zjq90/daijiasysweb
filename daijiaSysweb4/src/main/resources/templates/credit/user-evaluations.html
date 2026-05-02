@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户评价记录 - 代驾服务后台管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar .nav-link i {
+            width: 1.5rem;
+        }
+        .stat-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .content-wrapper {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .page-header {
+            background: white;
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .table-responsive {
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .table thead th {
+            border: none;
+            font-weight: 600;
+        }
+        .star-rating {
+            color: #ffc107;
+        }
+        .star-rating .star-empty {
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4 text-white text-center">
+                    <i class="bi bi-car-front-fill fs-1"></i>
+                    <h5 class="mt-2 fw-bold">代驾管理系统</h5>
+                    <small class="opacity-75">DAIJIA ADMIN</small>
+                </div>
+                <nav class="nav flex-column px-3">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-speedometer2"></i> 首页概览
+                    </a>
+                    <a class="nav-link" href="/credit">
+                        <i class="bi bi-star-half"></i> 服务信用管理
+                    </a>
+                    <a class="nav-link active" href="/credit/user-evaluations">
+                        <i class="bi bi-people-fill"></i> 用户评价记录
+                    </a>
+                    <a class="nav-link" href="/credit/driver-evaluations">
+                        <i class="bi bi-person-badge-fill"></i> 司机评价记录
+                    </a>
+                    <a class="nav-link" href="/pricing">
+                        <i class="bi bi-calculator-fill"></i> 系统计费设置
+                    </a>
+                    <a class="nav-link" href="/payment">
+                        <i class="bi bi-credit-card-fill"></i> 支付方式配置
+                    </a>
+                    <a class="nav-link" href="/orders">
+                        <i class="bi bi-list-ul"></i> 订单管理
+                    </a>
+                    <a class="nav-link" href="/test">
+                        <i class="bi bi-play-circle-fill"></i> 测试功能
+                    </a>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10 content-wrapper">
+                <!-- 页面头部 -->
+                <div class="page-header p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">
+                                <i class="bi bi-people-fill text-primary"></i> 用户评价记录
+                            </h3>
+                            <small class="text-muted">查看和管理用户对司机的评价记录</small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+                                <i class="bi bi-plus-circle"></i> 新增评价
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="px-4 mb-4">
+                    <div class="row g-4">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
+                                        <i class="bi bi-list-ul fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${totalEvaluations}">0</h4>
+                                        <small class="text-muted">总评价数</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-3 me-3">
+                                        <i class="bi bi-star-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${avgRating}">0.0</h4>
+                                        <small class="text-muted">平均评分</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 me-3">
+                                        <i class="bi bi-hand-thumbs-up-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${positiveCount}">0</h4>
+                                        <small class="text-muted">好评数(4-5星)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="stat-card bg-white p-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3 me-3">
+                                        <i class="bi bi-hand-thumbs-down-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0" th:text="${negativeCount}">0</h4>
+                                        <small class="text-muted">差评数(1-3星)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 评价列表 -->
+                <div class="px-4 pb-4">
+                    <div class="stat-card bg-white p-4">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>评价ID</th>
+                                        <th>订单号</th>
+                                        <th>司机</th>
+                                        <th>总体评分</th>
+                                        <th>驾驶技术</th>
+                                        <th>服务态度</th>
+                                        <th>车辆整洁</th>
+                                        <th>评价时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${evaluations.isEmpty()}">
+                                        <td colspan="9" class="text-center text-muted py-4">暂无评价数据</td>
+                                    </tr>
+                                    <tr th:each="eval : ${evaluations}">
+                                        <td th:text="${eval.id}">1</td>
+                                        <td>
+                                            <span class="text-primary fw-bold" th:text="${eval.orderNo}">DJ202401010001</span>
+                                        </td>
+                                        <td th:text="${eval.driver != null ? eval.driver.realName : '-'}">刘师傅</td>
+                                        <td>
+                                            <span class="star-rating" th:utext="${eval.ratingStars}"></span>
+                                            <span class="ms-2 fw-bold" th:text="${eval.overallRating}">5</span>
+                                        </td>
+                                        <td th:text="${eval.drivingSkill != null ? eval.drivingSkill : '-'}">5</td>
+                                        <td th:text="${eval.serviceAttitude != null ? eval.serviceAttitude : '-'}">5</td>
+                                        <td th:text="${eval.carCleanliness != null ? eval.carCleanliness : '-'}">5</td>
+                                        <td th:text="${#temporals.format(eval.createdTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" th:data-bs-target="'#detailModal' + ${eval.id}">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${eval.id}">
+                                                <i class="bi bi-trash"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增评价模态框 -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-plus-circle text-primary"></i> 新增评价
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/credit/user-evaluations" method="post">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">订单号 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="orderNo" required placeholder="例如：DJ202401010001">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">司机ID</label>
+                                <input type="number" class="form-control" name="driverId" placeholder="司机ID">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">总体评分 <span class="text-danger">*</span></label>
+                                <select class="form-select" name="overallRating" required>
+                                    <option value="">请选择</option>
+                                    <option value="5">5星 - 非常满意</option>
+                                    <option value="4">4星 - 满意</option>
+                                    <option value="3">3星 - 一般</option>
+                                    <option value="2">2星 - 不满意</option>
+                                    <option value="1">1星 - 非常不满意</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">驾驶技术</label>
+                                <select class="form-select" name="drivingSkill">
+                                    <option value="">请选择</option>
+                                    <option value="5">5星</option>
+                                    <option value="4">4星</option>
+                                    <option value="3">3星</option>
+                                    <option value="2">2星</option>
+                                    <option value="1">1星</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">服务态度</label>
+                                <select class="form-select" name="serviceAttitude">
+                                    <option value="">请选择</option>
+                                    <option value="5">5星</option>
+                                    <option value="4">4星</option>
+                                    <option value="3">3星</option>
+                                    <option value="2">2星</option>
+                                    <option value="1">1星</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">车辆整洁</label>
+                                <select class="form-select" name="carCleanliness">
+                                    <option value="">请选择</option>
+                                    <option value="5">5星</option>
+                                    <option value="4">4星</option>
+                                    <option value="3">3星</option>
+                                    <option value="2">2星</option>
+                                    <option value="1">1星</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">评价内容</label>
+                            <textarea class="form-control" name="content" rows="3" placeholder="请输入评价内容..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 确认提交
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框（动态生成） -->
+    <th:block th:each="eval : ${evaluations}">
+        <div class="modal fade" th:id="'detailModal' + ${eval.id}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-eye text-info"></i> 评价详情
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">评价ID</label>
+                                <p class="fw-bold" th:text="${eval.id}">1</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">订单号</label>
+                                <p class="fw-bold text-primary" th:text="${eval.orderNo}">DJ202401010001</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">被评价司机</label>
+                                <p class="fw-bold" th:text="${eval.driver != null ? eval.driver.realName : '-'}">刘师傅</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">评价时间</label>
+                                <p class="fw-bold" th:text="${#temporals.format(eval.createdTime, 'yyyy-MM-dd HH:mm:ss')}">2024-01-01 12:00:00</p>
+                            </div>
+                        </div>
+                        <div class="border-top border-bottom py-3 mb-3">
+                            <div class="d-flex justify-content-center align-items-center mb-3">
+                                <span class="h3 fw-bold text-warning me-3" th:text="${eval.overallRating}">5</span>
+                                <span class="star-rating h2" th:utext="${eval.ratingStars}"></span>
+                                <span class="ms-3 text-muted">总体评分</span>
+                            </div>
+                            <div class="row justify-content-center">
+                                <div class="col-md-3 text-center">
+                                    <label class="text-muted small">驾驶技术</label>
+                                    <p class="fw-bold" th:text="${eval.drivingSkill != null ? eval.drivingSkill + '星' : '-'}">5星</p>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <label class="text-muted small">服务态度</label>
+                                    <p class="fw-bold" th:text="${eval.serviceAttitude != null ? eval.serviceAttitude + '星' : '-'}">5星</p>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <label class="text-muted small">车辆整洁</label>
+                                    <p class="fw-bold" th:text="${eval.carCleanliness != null ? eval.carCleanliness + '星' : '-'}">5星</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-muted small">评价内容</label>
+                            <p th:text="${eval.content != null ? eval.content : '暂无评价内容'}" class="text-muted">评价内容...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 删除确认模态框 -->
+        <div class="modal fade" th:id="'deleteModal' + ${eval.id}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-danger">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 确认删除
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">确定要删除这条评价记录吗？</p>
+                        <p class="text-muted small">订单号：<span th:text="${eval.orderNo}">DJ202401010001</span></p>
+                        <p class="text-danger small"><i class="bi bi-info-circle"></i> 此操作不可恢复，请谨慎操作！</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <form th:action="'/credit/user-evaluations/' + ${eval.id} + '/delete'" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> 确认删除
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
