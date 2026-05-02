@@ -1,0 +1,27 @@
+$primary-color: #4FC3F7;
+$primary-light: #81D4FA;
+$primary-dark: #29B6F6;
+$primary-gradient: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+
+$success-color: #4CAF50;
+$warning-color: #FF9800;
+$danger-color: #F44336;
+$info-color: #2196F3;
+
+$white: #FFFFFF;
+$background-color: #F5F5F5;
+$text-color: #333333;
+$text-muted: #999999;
+$text-light: #CCCCCC;
+$border-color: #EEEEEE;
+
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+$shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+
+$radius-sm: 8rpx;
+$radius: 16rpx;
+$radius-lg: 24rpx;
+$radius-xl: 32rpx;
+
+$transition: all 0.3s ease;

@@ -1,0 +1,112 @@
+{
+    "name" : "代驾系统",
+    "appid" : "__UNI__DaijiaSys",
+    "description" : "专业代驾服务平台",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "app-plus" : {
+        "usingComponents" : true,
+        "nvueStyleCompiler" : "uni-app",
+        "compilerVersion" : 3,
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        },
+        "modules" : {},
+        "distribute" : {
+            "android" : {
+                "permissions" : [
+                    "android.permission.ACCESS_COARSE_LOCATION",
+                    "android.permission.ACCESS_FINE_LOCATION",
+                    "android.permission.ACCESS_NETWORK_STATE",
+                    "android.permission.ACCESS_WIFI_STATE",
+                    "android.permission.CHANGE_WIFI_STATE",
+                    "android.permission.READ_PHONE_STATE",
+                    "android.permission.WRITE_EXTERNAL_STORAGE",
+                    "android.permission.READ_EXTERNAL_STORAGE",
+                    "android.permission.RECORD_AUDIO",
+                    "android.permission.CAMERA",
+                    "android.permission.VIBRATE",
+                    "android.permission.INTERNET"
+                ]
+            },
+            "ios" : {
+                "plist" : {
+                    "NSLocationAlwaysAndWhenInUseUsageDescription" : "需要您的位置信息来提供代驾服务",
+                    "NSLocationWhenInUseUsageDescription" : "需要您的位置信息来提供代驾服务",
+                    "NSCameraUsageDescription" : "需要访问相机来上传头像",
+                    "NSPhotoLibraryUsageDescription" : "需要访问相册来上传头像",
+                    "NSMicrophoneUsageDescription" : "需要访问麦克风来进行紧急求助录音"
+                }
+            },
+            "splashscreen" : {
+                "androidStyle" : "default",
+                "iosStyle" : "default"
+            }
+        }
+    },
+    "quickapp" : {},
+    "mp-weixin" : {
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : false,
+            "es6" : true,
+            "enhance" : true,
+            "postcss" : true,
+            "preloadBackgroundData" : false,
+            "minified" : true,
+            "newFeature" : false,
+            "coverView" : true,
+            "nodeModules" : false,
+            "autoAudits" : false,
+            "showShadowRootInWxmlPanel" : true,
+            "scopeDataCheck" : false,
+            "uglifyFileName" : false,
+            "checkInvalidKey" : true,
+            "checkSiteMap" : true,
+            "uploadWithSourceMap" : true,
+            "compileHotReLoad" : false,
+            "lazyloadPlaceholderEnable" : false,
+            "useMultiFrameRuntime" : true,
+            "useApiHook" : true,
+            "useApiHostProcess" : true,
+            "babelSetting" : {
+                "ignore" : [],
+                "disablePlugins" : [],
+                "outputPath" : ""
+            },
+            "bundle" : false,
+            "useIsolateContext" : true,
+            "userConfirmedBundleSwitch" : false,
+            "packNpmManually" : false,
+            "packNpmRelationList" : [],
+            "minifyWXSS" : true,
+            "disableUseStrict" : false,
+            "minifyWXML" : true,
+            "showES6CompileOption" : false,
+            "useCompilerPlugins" : false
+        },
+        "usingComponents" : true,
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "需要您的位置信息来提供代驾服务"
+            }
+        }
+    },
+    "mp-alipay" : {
+        "usingComponents" : true
+    },
+    "mp-baidu" : {
+        "usingComponents" : true
+    },
+    "mp-toutiao" : {
+        "usingComponents" : true
+    },
+    "uniStatistics" : {
+        "enable" : false
+    },
+    "vueVersion" : "3"
+}
